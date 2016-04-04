@@ -1,5 +1,6 @@
 {
 (*open Parser        (* The type token is defined in parser.mli *)*)
+    (* Some tokens will need to be renamed as they get overloaded *)
     type token =
       (* Literals *)
       | INT_LIT of int
@@ -54,9 +55,13 @@
       | SEMICOLON
       | FUNCDEC
       | EOL
+      | EOF
 
-    exception Syntax_error
-    exception Eof
+      (* Not quite a token, but doing it this way leads to more functional
+         code for lexing a whole file, and I think it's prettier that way *)
+      | SYNTAX_ERROR
+
+    exception Syntax_error of int * int
 }
 
 let digit = ['0'-'9']
@@ -118,13 +123,13 @@ rule tokenize = parse
     | "func"    { FUNCDEC }
     | ['\n' ]   { EOL }
     (* etc *)
-    | eof       { raise Eof }
-    | _         { raise Syntax_error }
+    | eof       { EOF }
+    | _         { SYNTAX_ERROR }
 
 {
 let tokstr = function
-  | INT_LIT i -> "INT_LIT " ^ (string_of_int i)
-  | FLOAT_LIT f -> "FLOAT_LIT " ^ (string_of_float f)
+  | INT_LIT i -> "(INT_LIT " ^ (string_of_int i) ^ ")"
+  | FLOAT_LIT f -> "(FLOAT_LIT " ^ (string_of_float f) ^ ")"
   | STRING_LIT str -> "(STRING_LIT \"" ^ str ^ "\")"
   | TRUE -> "TRUE"
   | FALSE -> "FALSE"
@@ -169,6 +174,8 @@ let tokstr = function
   | RSQUARE -> "RSQUARE"
   | SEMICOLON -> "SEMICOLON"
   | FUNCDEC -> "FUNCDEC"
-  | EOL -> "EOL"
+  | EOL -> "EOL\n"
+  | EOF -> "EOF"
+  | SYNTAX_ERROR -> "Syntax error. An error probably should have been raised\n"
 
 }
