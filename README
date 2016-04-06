@@ -1,3 +1,8 @@
 Scrawl is a language being made by Kyle Seipp and Henry Elbaum.
 
 More details to come
+
+Since this project is long term, there are going to be TODOs that should be
+kept in the back of one's head. Thus, after a TODO, there should be a number
+ranging from 0 to 9 describing how urgent the change is. Example: TODO 7 is not
+very urgent.
