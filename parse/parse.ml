@@ -1,5 +1,5 @@
 (* CFG
-expr => Funcdec Funcbody
+expr => Funcdef Funcbody
         Assign
         num_expr
         int_expr
@@ -8,6 +8,13 @@ expr => Funcdec Funcbody
         Control Flow
         Declaration
         NULL
+
+Funcdef => identifier ( type_list )
+
+type_list => type , type_list
+             type
+
+Funcbody => block
 
 Assign => lvalue Assign expr
 
