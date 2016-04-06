@@ -58,7 +58,7 @@ rule tokenize = parse
     | '['       { LSQUARE }
     | ']'       { RSQUARE }
     | ';'       { SEMICOLON }
-    | "func"    { FUNCDEC }
+    | "func"    { FUNCDEF }
     | ['\n' ]   { EOL }
     (* etc *)
     | eof       { EOF }
@@ -111,7 +111,7 @@ let tokstr = function
   | LSQUARE -> "LSQUARE"
   | RSQUARE -> "RSQUARE"
   | SEMICOLON -> "SEMICOLON"
-  | FUNCDEC -> "FUNCDEC"
+  | FUNCDEF -> "FUNCDEF"
   | EOL -> "EOL\n"
   | EOF -> "EOF"
   | SYNTAX_ERROR -> "Syntax error. An error probably should have been raised\n"

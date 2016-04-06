@@ -10,25 +10,38 @@
 %token PLUS MINUS TIMES DIV MOD POW
 %token ASSIGN
 %token <string> IDENT
-%token IF ELSE FOR WHILE
+%token IF ELSE FOR WHILE FUNCDEF
 %token LPAREN RPAREN LCURLY RCURLY LSQUARE RSQUARE
 %token SEMICOLON
-%token FUNCDEC
 %token EOL EOF
 /* Not quite a token, but doing it this way leads to more functional
    code for catching a syntax error when parsing a file */
 %token SYNTAX_ERROR
 
 /* Set symbol precedence */
+/* Lowest priority things up top */
 
-/*************** 
-  Left over from the example that this file came from. The current
-  productions are all no good and we'll need to add a lot more and also
-  figure out how precedence should work 
- ***************/
-%left PLUS MINUS        /* lowest precedence */
-%left TIMES DIV         /* medium precedence */
-%nonassoc UMINUS        /* highest precedence */
+%right IF FOR WHILE FUNCDEF
+%right ELSE
+%left ASSIGN 
+%right INT_T FLOAT_T STRING_T BOOL_T
+%left LOR
+%left LAND
+%left BOR
+%left BXOR
+%left BAND
+%left EQ
+%left LESS GREATER
+%left BLEFT BRIGHT 
+%left PLUS MINUS   
+%left TIMES DIV MOD
+%left POW
+%right BNOT LNOT
+%left SEMICOLON
+%right LPAREN LSQUARE LCURLY
+%left RPAREN RSQUARE RCURLY
+/* Highest priority things down bottom */
+
 %start main             /* the entry point */
 %type <int> main
 %%
@@ -42,5 +55,4 @@ expr:
   | expr MINUS expr         { $1 - $3 }
   | expr TIMES expr         { $1 * $3 }
   | expr DIV expr           { $1 / $3 }
-  | MINUS expr %prec UMINUS { - $2 }
 ;
