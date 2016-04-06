@@ -5,5 +5,5 @@ let () =
     else
     
     let source = open_in Sys.argv.(1) in
-    let toks = Lex.tok_list source in
+    let toks = Lex.tok_lst source in
     close_in source

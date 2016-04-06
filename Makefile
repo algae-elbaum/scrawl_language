@@ -1,11 +1,15 @@
 all: scrawlc test
 
-scrawlc: lex/lexer.mll lex/lex.ml scrawlc.ml
-	@ocamlbuild -I lex scrawlc.native
+scrawlc: parse/lexer.mll parse/lex.ml \
+         parse/parser.mly parse/parse.ml \
+         scrawlc.ml
+	@ocamlbuild -I parse scrawlc.native
 	@mv scrawlc.native scrawlc
 
-test: lex/lexer.mll lex/lex.ml lex/lex_tests.ml test.ml
-	@ocamlbuild -I lex test.native
+test: parse/lexer.mll parse/lex.ml parse/lex_tests.ml \
+      parse/parser.mly parse/parse.ml parse/parse_tests.ml \
+      test.ml
+	@ocamlbuild -I parse test.native
 	@mv test.native test
 
 clean:

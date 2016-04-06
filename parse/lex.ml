@@ -6,15 +6,15 @@
 (* Get the list of tokens for a file. If there's a syntax error, raise a
    Syntax_error with the line number and how many tokens had been successfully
    read on that line *)
-let tok_list file = 
+let tok_lst file = 
     let lexbuf = Lexing.from_channel file in
     let rec next_toks c_line c_tok =
         let n_tok = Lexer.tokenize lexbuf in
-        if n_tok = Lexer.EOF then 
+        if n_tok = Parser.EOF then 
             []
-        else if n_tok = Lexer.SYNTAX_ERROR then
-            raise (Lexer.Syntax_error (c_line, c_tok))
-        else if n_tok = Lexer.EOL then 
+        else if n_tok = Parser.SYNTAX_ERROR then
+            raise (Parsing_globals.Syntax_error (c_line, c_tok))
+        else if n_tok = Parser.EOL then 
             n_tok :: (next_toks (c_line + 1) 0)
         else 
             n_tok :: (next_toks c_line (c_tok + 1))
