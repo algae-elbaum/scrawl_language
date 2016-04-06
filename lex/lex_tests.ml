@@ -2,7 +2,7 @@
 (* Open a file that shouldn't generate any lexing errors and lex it *)
 let lex_ok_test () = 
     Printf.printf "Lexing s file with no errors.\n";
-    let file = open_in "lex_test.sc" in
+    let file = open_in "lex/lex_test.sc" in
     let try_wrap () = 
         try
             (fun x -> ()) (Lex.tok_list file);
@@ -20,7 +20,7 @@ let lex_ok_test () =
 (* Open a file that should generate a lexing error and lex it *)
 let lex_bad_test () =
     Printf.printf "Lexing a file with errors.\n";
-    let file = open_in "lex_error_test.sc" in
+    let file = open_in "lex/lex_error_test.sc" in
     let try_wrap () = 
     try
         (fun x -> ()) (Lex.tok_list file);
