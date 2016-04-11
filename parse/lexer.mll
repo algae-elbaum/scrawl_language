@@ -9,8 +9,8 @@ let str_internal = ([^'"']|("\\\""))* as str
 rule tokenize = parse
     | [' ' '\t']      { tokenize lexbuf }     (* skip blanks *)
 
-    | digit+ as lxm                   { INT_LIT (int_of_string lxm) }
-    | flt as lxm                      { FLOAT_LIT (float_of_string lxm) }
+    | digit+ as lxm                   { INT_LIT (lxm) }
+    | flt as lxm                      { FLOAT_LIT (lxm) }
     | '"' (str_internal as str) '"'   { STRING_LIT str }
     | "true"                          { TRUE }
     | "false"                         { FALSE }
@@ -66,8 +66,8 @@ rule tokenize = parse
 
 {
 let tokstr = function
-  | INT_LIT i -> "(INT_LIT " ^ (string_of_int i) ^ ")"
-  | FLOAT_LIT f -> "(FLOAT_LIT " ^ (string_of_float f) ^ ")"
+  | INT_LIT i -> "(INT_LIT " ^ (i) ^ ")"
+  | FLOAT_LIT f -> "(FLOAT_LIT " ^ (f) ^ ")"
   | STRING_LIT str -> "(STRING_LIT \"" ^ str ^ "\")"
   | TRUE -> "TRUE"
   | FALSE -> "FALSE"

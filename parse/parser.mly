@@ -1,8 +1,9 @@
 
 /* Declare tokens */
-%token <int> INT_LIT
-%token <float> FLOAT_LIT
+%token <string> INT_LIT
+%token <string> FLOAT_LIT
 %token <string> STRING_LIT
+%token <string> BOOL_LIT
 %token TRUE FALSE
 %token INT_T FLOAT_T STRING_T BOOL_T
 %token BAND BOR BXOR BLEFT BRIGHT BNOT
@@ -14,6 +15,8 @@
 %token LPAREN RPAREN LCURLY RCURLY LSQUARE RSQUARE
 %token SEMICOLON
 %token EOL EOF
+%token NULL
+/* TODO 4 probably want a comma token */
 /* Not quite a token, but doing it this way leads to more functional
    code for catching a syntax error when parsing a file */
 %token SYNTAX_ERROR
@@ -42,146 +45,141 @@
 %left RPAREN RSQUARE RCURLY
 /* Highest priority things down bottom */
 
+/* TODO 3 include error terms so that we don't get one syntax error per compile 
+oh man global error repair is cool. I think we should write that maybe*/
 %start main             /* the entry point */
-%type <int> main
+%type <string> main
 %%
 main:
-    expr EOL                { $1 }
-;
+  | e=expr EOL {e}
+
 expr:
-    FUNCDEF Funcbody
-  | ASSIGN
-  | num_expr
-  | int_expr
-  | string_expr
-  | bool_expr
-  | control_flow
-  | declaration
-  | NULL
-;
+  | FUNCDEF; f=Funcbody {"FUNCDEF" ^ f}
+  | a=assign {a}
+  | e=num_expr {e}
+  | e=int_expr {e}
+  | e=string_expr {e}
+  | e=bool_expr {e}
+  | c=control_flow {c}
+  /*| d=declaration {d} 
+  What is declaration supposed to be? */
+  | NULL {"NULL"}
 
 Funcdef:
-    identifier ( type_list )
-;
+  | i=identifier; LPAREN; t=type_list; LPAREN {i^"("^t^")"}
+
+identifier:
+  | i=IDENT {i}
 
 type_list: 
-    type , type_list
-  | type
-;
+  | t=type_; q=type_list {t ^" "^q}
+  | t=type_ {t}
+
+type_:
+  | INT_T {"INT_T"}
+  | FLOAT_T {"FLOAT_T"}
+  | STRING_T {"STRING_T"}
+  | BOOL_T {"BOOL_T"}
 
 Funcbody:
-    block
-;
+  | b=block {b}
 
-Assign:
-    lvalue Assign expr
-;
 
-lvalue
-    Decl
-  | identifier
-  | identifier [ int_expr ]
-;
+assign:
+  | l=lvalue; ASSIGN; e=expr {l ^ "="^e}
 
-Decl
-    Type identifier
-  | Type identifier [ int_expr ]
-;
+lvalue:
+  | d=Decl {d}
+  | i=identifier {i}
+  | i=identifier; LSQUARE; e=int_expr; RSQUARE {i^"["^e^"]"}
 
-Type
-    *_T
-;
+Decl:
+  | t=type_; i=identifier {t^i}
+  | t=type_; i=identifier; LSQUARE; e=int_expr; RSQUARE {t^i^"["^e^"]"}
 
-Control Flow
-    While
-  | If
-  | For
-;
+control_flow:
+  | w=While {w}
+  | i=If {i}
+  | f=For {f}
 
-For 
-    FOR ( lvalue ; bool_expr ; expr ) block
-  | FOR ( Assign ; bool_expr ; expr ) block
-;
+For: 
+  | FOR; LPAREN; l=lvalue; SEMICOLON; e=bool_expr; SEMICOLON; d=expr; RPAREN; b=block {"FOR("^l^";"^e^";"^d^")"^b}
+  | FOR; LPAREN; l=assign; SEMICOLON; e=bool_expr; SEMICOLON; d=expr; RPAREN; b=block {"FOR("^l^";"^e^";"^d^")"^b}
 
-While
-    WHILE bool_expr block
-;
+While:
+  | WHILE; e=bool_expr; b=block {"WHILE"^e^b}
 
-If 
-    IF bool_expr block ELSE block
-  | IF bool_expr block
-;
+If: 
+  | IF; e=bool_expr; b=block; ELSE; c=block {"IF" ^ e ^ b ^ "ELSE" ^ c}
+  | IF; e=bool_expr; b=block {"IF" ^ e ^ b}
 
-block 
-    expr
-  | { expr_list }
-;
+block: 
+  | e=expr {"{"^e^"}"}
+  | LCURLY; e=expr_list; RCURLY {"{"^e^"}"}
 
-expr_list
-    expr ; expr_list
-  | expr
-;
+expr_list:
+  | e=expr; SEMICOLON; f=expr_list {e ^ ";" ^ f}
+  | e=expr {e}
 
-num_expr
-    num_expr num_bop num_expr
-  | num_uop num_expr
-  | ( num_expr )
-  | INT_LIT
-  | FLOAT_LIT
-;
+num_expr:
+  | x = num_expr; op = num_bop; y = num_expr {op ^ x ^ y}
+  | op = num_uop; x = num_expr { op ^ x }
+  | LPAREN; x=num_expr; RPAREN { "("^x^")" } 
+  | x = int_expr {x}
+  | x = FLOAT_LIT {x}
 
-int_expr
-    int_expr int_bop int_expr
-  | int_uop int_expr
-  | ( float_expr )
-  | INT_LIT
-;
+int_expr:
+  | x=int_expr; op=int_bop; y=int_expr {op ^ x ^ y}
+  | op=int_uop; x=int_expr {op ^ x}
+  | LPAREN; x=num_expr; RPAREN {"("^x^")"}
+  | x=INT_LIT {x}
 
-int_bop 
-    num_bop
-  | MOD
-  | DIV
-  | BAND
-  | BOR
-  | BXOR
-  | BLEFT
-  | BRIGHT
-  | BNOT
-;
+%inline int_bop:
+  | x= num_bop {x}
+  | MOD {"mod"}
+  | DIV {"/"}
+  | BAND {"land"}
+  | BOR {"lor"}
+  | BXOR {"lxor"}
+  | BLEFT {"lsl"}
+  | BRIGHT {"lsr"}
+  | BNOT {"lnot"}
 
-num_bop
-    PLUS
-  | MINUS
-  | TIMES
-  | POW
-;
+%inline num_uop:
+  | op=int_uop {op}
 
-string_expr 
-    string_expr PLUS string_expr
-  | ( string_expr )
-  | STR_LIT
-;
+%inline int_uop:
+  | MINUS {"-"}
+  | BNOT {"band"}
 
-bool_expr 
-    bool_expr bool_bop bool_expr
-  | NOT bool_expr
-  | ( bool_expr )
-  | BOOL_LIT
-  | string_expr comp string_expr
-  | num_expr comp num_expr
-;
+%inline num_bop:
+  | PLUS {"+"}
+  | MINUS {"-"}
+  | TIMES {"*"}
+  | POW {"**"}
 
-bool_bop
-    LAND
-  | LOR
-  | LNOT
-  | LXNOR
-  | LXAND
-  | LXNAND
-;
+string_expr:
+  | x =string_expr; PLUS; y=string_expr {x ^ "concat" ^ y}
+  | LPAREN; x=string_expr; RPAREN {"(x)"}
+  | x=STRING_LIT {x}
 
-comp
-    EQ
-  | LESS
-  | GREATER
-;
+bool_expr: 
+  | x=bool_expr; op=bool_bop; y=bool_expr { x ^ op ^ y}
+  | LNOT; x=bool_expr { "not x"}
+  | LPAREN; x=bool_expr; RPAREN {"(x)"}
+  | x=BOOL_LIT {x}
+  | x=string_expr; op=comp; y=string_expr {x ^ op ^ y}
+  | x=num_expr; op=comp; y=num_expr {x ^ op ^ y}
+
+%inline bool_bop:
+  | LAND { "and"}
+  | LOR { "or"}
+  | LNOT { "not" }
+  | LXNOR { "xnor"}
+  | LXAND { "ret false" }
+  | LXNAND { "ret true" }
+
+%inline comp:
+  | EQ {"="}
+  | LESS {"<"}
+  | GREATER {">"}
