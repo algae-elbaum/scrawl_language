@@ -1,0 +1,14 @@
+Week 3: Get parsing done.
+        Make good progress on getting to the intermediate code
+Week 4: Get the intermediate code down.
+        Start on the way to assembly (ch 8, 9 of Tiger)
+Week 5: Get closer to assembly (ch 9, 10)
+Week 6: Get assembly done (ch 11, 12)
+        (Though maybe not for more complicated things like closures)
+Week 7: Start optimization (control/data flow analysis... other stuff?)
+Week 8: Probably more optimization
+        Closures, Anything else that looks fun
+Week 9: Playing around with more optimization and features
+Week 10: Same as above, but also trying to wrap everything up nicely
+Week 11: Finals, probably not doing much for this project. Maybe some
+         final touches for the code and documentation

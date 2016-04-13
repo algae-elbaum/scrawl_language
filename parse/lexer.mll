@@ -58,6 +58,7 @@ rule tokenize = parse
     | '['       { LSQUARE }
     | ']'       { RSQUARE }
     | ';'       { SEMICOLON }
+    | ','       { COMMA }
     | "func"    { FUNCDEF }
     | ['\n' ]   { EOL }
     (* etc *)

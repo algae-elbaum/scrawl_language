@@ -16,7 +16,7 @@
 %token SEMICOLON
 %token EOL EOF
 %token NULL
-/* TODO 4 probably want a comma token */
+%token COMMA
 /* Not quite a token, but doing it this way leads to more functional
    code for catching a syntax error when parsing a file */
 %token SYNTAX_ERROR
@@ -45,7 +45,7 @@
 %left RPAREN RSQUARE RCURLY
 /* Highest priority things down bottom */
 
-/* TODO 3 include error terms so that we don't get one syntax error per compile 
+/* TODO 2 include error terms so that we don't get one syntax error per compile 
 oh man global error repair is cool. I think we should write that maybe*/
 %start main             /* the entry point */
 %type <string> main
