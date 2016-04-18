@@ -15,6 +15,8 @@ and expr =
     | VarExpr of var
     | DeclExpr of decl
     | AssignExpr of assign
+    | LambdaExpr of lambda
+    | ReturnExpr of expr
     | IntLitExpr of int_lit
     | FloatLitExpr of float_lit
     | StringLitExpr of string_lit
@@ -35,6 +37,7 @@ and decl =
     | FuncDecl of func_decl
 (* Good god why doesn't ocaml have anonymous record types *)
 and assign = {var : var; value : expr; pos : pos}
+and lambda = {params: qual_ident list; body: expr; pos: pos}
 and int_lit = {value: int; pos: pos}
 and float_lit = {value: float; pos: pos}
 and string_lit = {value: string; pos: pos}

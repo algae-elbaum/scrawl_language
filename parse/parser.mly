@@ -10,7 +10,7 @@
 %token PLUS MINUS TIMES DIV MOD POW UMINUS
 %token ASSIGN
 %token <string> IDENT
-%token IF ELSE FOR WHILE LAMBDA ARROW
+%token IF ELSE FOR WHILE LAMBDA ARROW RETURN
 %token LPAREN RPAREN LCURLY RCURLY LSQUARE RSQUARE
 %token SEMICOLON
 %token EOL EOF
@@ -59,6 +59,7 @@ expr:
   | decl {}
   | assign {}
   | lambda {}
+  | RETURN expr {}
   | INT_LIT {}
   | FLOAT_LIT {}
   | STRING_LIT {}

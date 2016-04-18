@@ -61,6 +61,7 @@ rule tokenize = parse
     | ','       { COMMA }
     | "->"      { ARROW }
     | "lambda"  { LAMBDA }
+    | "return"  { RETURN }
     | ['\n' ]   { EOL }
     | eof       { EOF }
     | _         { SYNTAX_ERROR }
