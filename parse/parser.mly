@@ -4,18 +4,16 @@
 %token <string> FLOAT_LIT
 %token <string> STRING_LIT
 %token <string> BOOL_LIT
-%token TRUE FALSE
 %token INT_T FLOAT_T STRING_T BOOL_T
 %token BAND BOR BXOR BLEFT BRIGHT BNOT
 %token LAND LOR LNOT LXNOR LXAND LXNAND EQ LESS GREATER
-%token PLUS MINUS TIMES DIV MOD POW
+%token PLUS MINUS TIMES DIV MOD POW UMINUS
 %token ASSIGN
 %token <string> IDENT
-%token IF ELSE FOR WHILE FUNCDEF
+%token IF ELSE FOR WHILE LAMBDA ARROW
 %token LPAREN RPAREN LCURLY RCURLY LSQUARE RSQUARE
 %token SEMICOLON
 %token EOL EOF
-%token NULL
 %token COMMA
 /* Not quite a token, but doing it this way leads to more functional
    code for catching a syntax error when parsing a file */
@@ -23,8 +21,9 @@
 
 /* Set symbol precedence */
 /* Lowest priority things up top */
-
-%right IF FOR WHILE FUNCDEF
+/* COMMENTED OUT TO WORK ON GETTING OTHER STUFF TO COMPILE BETTER
+   TODO 0 get this stuff in order
+%right IF FOR WHILE LAMBDA
 %right ELSE
 %left ASSIGN 
 %right INT_T FLOAT_T STRING_T BOOL_T
@@ -43,143 +42,97 @@
 %left SEMICOLON
 %right LPAREN LSQUARE LCURLY
 %left RPAREN RSQUARE RCURLY
+*/
 /* Highest priority things down bottom */
 
 /* TODO 2 include error terms so that we don't get one syntax error per compile 
 oh man global error repair is cool. I think we should write that maybe*/
 %start main             /* the entry point */
-%type <string> main
+%type <int> main
 %%
+/* TODO 0: Add semantic actions for use in building the abstract syntax tree  */
 main:
-  | e=expr EOL {e}
+  | expr_list EOF {1}
 
 expr:
-  | FUNCDEF; f=Funcbody {"FUNCDEF" ^ f}
-  | a=assign {a}
-  | e=num_expr {e}
-  | e=int_expr {e}
-  | e=string_expr {e}
-  | e=bool_expr {e}
-  | c=control_flow {c}
-  /*| d=declaration {d} 
-  What is declaration supposed to be? */
-  | NULL {"NULL"}
+  | var {}
+  | decl {}
+  | assign {}
+  | lambda {}
+  | INT_LIT {}
+  | FLOAT_LIT {}
+  | STRING_LIT {}
+  | BOOL_LIT {}
+  | bin_op_expr {}
+  | un_op_expr {}
+  | control_flow {}
+  | LPAREN expr RPAREN {}
+  | LCURLY expr_list RCURLY {}
 
-Funcdef:
-  | i=identifier; LPAREN; t=type_list; LPAREN {i^"("^t^")"}
+scrawl_type:
+  | INT_T {}
+  | FLOAT_T {}
+  | STRING_T {}
+  | BOOL_T {}
+  | scrawl_type LSQUARE expr RSQUARE {}
 
-identifier:
-  | i=IDENT {i}
+var:
+  | IDENT {}  /* SimpleVar */
+  | var LSQUARE expr RSQUARE {} /* ArrayVar */
 
-type_list: 
-  | t=type_; q=type_list {t ^" "^q}
-  | t=type_ {t}
+decl:
+  | scrawl_type IDENT {} /* SimpleDecl */
+  | scrawl_type IDENT LSQUARE expr RSQUARE {} /* ArrDecl */
+  | scrawl_type IDENT LPAREN param_list RPAREN {} /* FuncDecl */
 
-type_:
-  | INT_T {"INT_T"}
-  | FLOAT_T {"FLOAT_T"}
-  | STRING_T {"STRING_T"}
-  | BOOL_T {"BOOL_T"}
-
-Funcbody:
-  | b=block {b}
-
+param_list:
+  | scrawl_type IDENT COMMA param_list {}
+  | scrawl_type IDENT {}
 
 assign:
-  | l=lvalue; ASSIGN; e=expr {l ^ "="^e}
+  | var ASSIGN expr {}
 
-lvalue:
-  | d=Decl {d}
-  | i=identifier {i}
-  | i=identifier; LSQUARE; e=int_expr; RSQUARE {i^"["^e^"]"}
+lambda:
+  | LAMBDA LPAREN param_list RPAREN ARROW expr {}
 
-Decl:
-  | t=type_; i=identifier {t^i}
-  | t=type_; i=identifier; LSQUARE; e=int_expr; RSQUARE {t^i^"["^e^"]"}
+bin_op_expr:
+  | expr bin_op expr {}
+
+bin_op:
+    | BAND {}
+    | BOR {}
+    | BXOR {}
+    | BLEFT {}
+    | BRIGHT {}
+    | LAND {}
+    | LOR {}
+    | LXNOR {}
+    | LXAND {}
+    | LXNAND {}
+    | EQ {}
+    | LESS {}
+    | GREATER {}
+    | PLUS {}
+    | MINUS {}
+    | TIMES {}
+    | DIV {}
+    | MOD {}
+    | POW {}
+
+un_op_expr:
+  | un_op expr {}
+
+un_op:
+  | BNOT {}
+  | LNOT {}
+  | UMINUS {}
 
 control_flow:
-  | w=While {w}
-  | i=If {i}
-  | f=For {f}
-
-For: 
-  | FOR; LPAREN; l=lvalue; SEMICOLON; e=bool_expr; SEMICOLON; d=expr; RPAREN; b=block {"FOR("^l^";"^e^";"^d^")"^b}
-  | FOR; LPAREN; l=assign; SEMICOLON; e=bool_expr; SEMICOLON; d=expr; RPAREN; b=block {"FOR("^l^";"^e^";"^d^")"^b}
-
-While:
-  | WHILE; e=bool_expr; b=block {"WHILE"^e^b}
-
-If: 
-  | IF; e=bool_expr; b=block; ELSE; c=block {"IF" ^ e ^ b ^ "ELSE" ^ c}
-  | IF; e=bool_expr; b=block {"IF" ^ e ^ b}
-
-block: 
-  | e=expr {"{"^e^"}"}
-  | LCURLY; e=expr_list; RCURLY {"{"^e^"}"}
+  | IF LPAREN expr RPAREN expr {}
+  | IF LPAREN expr RPAREN expr ELSE expr {}
+  | FOR LPAREN expr SEMICOLON expr SEMICOLON expr RPAREN expr {}
+  | WHILE LPAREN expr RPAREN expr {}
 
 expr_list:
-  | e=expr; SEMICOLON; f=expr_list {e ^ ";" ^ f}
-  | e=expr {e}
-
-num_expr:
-  | x = num_expr; op = num_bop; y = num_expr {op ^ x ^ y}
-  | op = num_uop; x = num_expr { op ^ x }
-  | LPAREN; x=num_expr; RPAREN { "("^x^")" } 
-  | x = int_expr {x}
-  | x = FLOAT_LIT {x}
-
-int_expr:
-  | x=int_expr; op=int_bop; y=int_expr {op ^ x ^ y}
-  | op=int_uop; x=int_expr {op ^ x}
-  | LPAREN; x=num_expr; RPAREN {"("^x^")"}
-  | x=INT_LIT {x}
-
-%inline int_bop:
-  | x= num_bop {x}
-  | MOD {"mod"}
-  | DIV {"/"}
-  | BAND {"land"}
-  | BOR {"lor"}
-  | BXOR {"lxor"}
-  | BLEFT {"lsl"}
-  | BRIGHT {"lsr"}
-  | BNOT {"lnot"}
-
-%inline num_uop:
-  | op=int_uop {op}
-
-%inline int_uop:
-  | MINUS {"-"}
-  | BNOT {"band"}
-
-%inline num_bop:
-  | PLUS {"+"}
-  | MINUS {"-"}
-  | TIMES {"*"}
-  | POW {"**"}
-
-string_expr:
-  | x =string_expr; PLUS; y=string_expr {x ^ "concat" ^ y}
-  | LPAREN; x=string_expr; RPAREN {"(x)"}
-  | x=STRING_LIT {x}
-
-bool_expr: 
-  | x=bool_expr; op=bool_bop; y=bool_expr { x ^ op ^ y}
-  | LNOT; x=bool_expr { "not x"}
-  | LPAREN; x=bool_expr; RPAREN {"(x)"}
-  | x=BOOL_LIT {x}
-  | x=string_expr; op=comp; y=string_expr {x ^ op ^ y}
-  | x=num_expr; op=comp; y=num_expr {x ^ op ^ y}
-
-%inline bool_bop:
-  | LAND { "and"}
-  | LOR { "or"}
-  | LNOT { "not" }
-  | LXNOR { "xnor"}
-  | LXAND { "ret false" }
-  | LXNAND { "ret true" }
-
-%inline comp:
-  | EQ {"="}
-  | LESS {"<"}
-  | GREATER {">"}
+  | expr SEMICOLON expr_list {}
+  | expr {}

@@ -8,8 +8,9 @@ let tests = [("Lex ok test", Lex_tests.lex_ok_test ());
 
 let print_and_ret test =
     match test with
-    | (name, true) -> (Printf.printf "Passed: %s" name; 1)
-    | (name, false) -> (Printf.printf "Failed: %s" name; 0)
+    | (name, true) -> (Printf.printf "Passed: %s\n" name; 1)
+    | (name, false) -> (Printf.printf "Failed: %s\n" name; 0)
+in
 
 (* Count up how many tests passed and report it *)
 let pass = List.fold_left (+) 0 (List.map print_and_ret tests) in

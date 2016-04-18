@@ -9,11 +9,11 @@ let str_internal = ([^'"']|("\\\""))* as str
 rule tokenize = parse
     | [' ' '\t']      { tokenize lexbuf }     (* skip blanks *)
 
-    | digit+ as lxm                   { INT_LIT (lxm) }
-    | flt as lxm                      { FLOAT_LIT (lxm) }
+    | digit+ as lxm                   { INT_LIT lxm }
+    | flt as lxm                      { FLOAT_LIT lxm }
     | '"' (str_internal as str) '"'   { STRING_LIT str }
-    | "true"                          { TRUE }
-    | "false"                         { FALSE }
+    | "true"                          { BOOL_LIT "true" }
+    | "false"                         { BOOL_LIT "false" }
     
     | "int"     { INT_T }     
     | "float"   { FLOAT_T }
@@ -59,19 +59,18 @@ rule tokenize = parse
     | ']'       { RSQUARE }
     | ';'       { SEMICOLON }
     | ','       { COMMA }
-    | "func"    { FUNCDEF }
+    | "->"      { ARROW }
+    | "lambda"  { LAMBDA }
     | ['\n' ]   { EOL }
-    (* etc *)
     | eof       { EOF }
     | _         { SYNTAX_ERROR }
 
 {
 let tokstr = function
-  | INT_LIT i -> "(INT_LIT " ^ (i) ^ ")"
-  | FLOAT_LIT f -> "(FLOAT_LIT " ^ (f) ^ ")"
+  | INT_LIT i -> "(INT_LIT " ^ i ^ ")"
+  | FLOAT_LIT f -> "(FLOAT_LIT " ^ f ^ ")"
   | STRING_LIT str -> "(STRING_LIT \"" ^ str ^ "\")"
-  | TRUE -> "TRUE"
-  | FALSE -> "FALSE"
+  | BOOL_LIT b-> "(BOOL_LIT " ^ b ^ ")"
 
   | INT_T -> "INT_T"
   | FLOAT_T -> "FLOAT_T"
@@ -87,11 +86,15 @@ let tokstr = function
   | LAND -> "LAND"
   | LOR -> "LOR"
   | LNOT -> "LNOT"
+  | LXNOR -> "LXNOR"
+  | LXNAND -> "LXNAND"
+  | LXAND -> "LXAND"
   | EQ -> "EQ"
   | LESS -> "LESS"
   | GREATER -> "GREATER"
   | PLUS -> "PLUS"
   | MINUS -> "MINUS"
+  | UMINUS -> "UMINUS"
   | TIMES -> "TIMES"
   | DIV -> "DIV"
   | MOD -> "MOD"
@@ -112,7 +115,9 @@ let tokstr = function
   | LSQUARE -> "LSQUARE"
   | RSQUARE -> "RSQUARE"
   | SEMICOLON -> "SEMICOLON"
-  | FUNCDEF -> "FUNCDEF"
+  | COMMA -> "COMMA"
+  | ARROW -> "ARROW"
+  | LAMBDA -> "LAMBDA"
   | EOL -> "EOL\n"
   | EOF -> "EOF"
   | SYNTAX_ERROR -> "Syntax error. An error probably should have been raised\n"
