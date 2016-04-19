@@ -6,7 +6,7 @@
 (* Get the list of tokens for a file. If there's a syntax error, raise a
    Syntax_error with the line number and how many tokens had been successfully
    read on that line *)
-let tok_lst file = 
+(* let tok_lst file = 
     let lexbuf = Lexing.from_channel file in
     (* Iterate through the tokens of the file, tacking them on to a list and
        keeping track of location in the file in case an error comes up *) 
@@ -24,7 +24,18 @@ let tok_lst file =
         else 
             n_tok :: (next_toks c_line (c_tok + 1))
     in 
-    next_toks 0 1
-
+    next_toks 0 1 *)
+let tok_lst lexbuf =
+  try
+    T.input T.rule lexbuf
+  with exn ->
+    begin
+      let curr = lexbuf.Lexing.lex_curr_p in
+      let line = curr.Lexing.pos_lnum in
+      let ncim = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
+      let tok = Lexing.lexeme lexbuf in
+      let tail = Sql_lexer.ruleTail "" lexbuf in
+      raise (Error (exn,(line,cnum,tok,tail)))
+    end
 
 

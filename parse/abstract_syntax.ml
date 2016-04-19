@@ -45,9 +45,9 @@ and bool_lit = {value: bool; pos: pos}
 and func_call = {func: string; args: expr list; pos: pos}
 and bin_op_expr = {op: bin_op; argl: expr; argr: expr; pos: pos}
 and un_op_expr = {op: un_op; arg: expr; pos: pos}
-and if_expr = {cond: expr; body: expr; pos: pos}
+and if_expr = {cond: expr; body: expr list; else_expr: expr list; pos: pos}
 and for_expr = {iter_var: expr; cond: expr; iter: expr; body: expr list; pos: pos}
-and while_expr = {cond: expr; then_expr: expr list; else_expr: expr list; pos: pos}
+and while_expr = {cond: expr; body: expr list; pos: pos}
 and simple_var = {ident: string; pos: pos} (* An ordinary identifier *)
 and array_var = {arr: var; idx: expr; pos: pos} (* An array along with an index *)
 and simple_decl = {var_type: scrawl_type; ident: string; pos: pos}
@@ -61,8 +61,9 @@ and bin_op =
 and un_op = 
     | BNOT | LNOT | UMINUS
 and scrawl_type =
-    | INT     | FLOAT     | BOOL     | STRING
-    | INT_LST | FLOAT_LST | BOOL_LST | STRING_LST
+    | INT | FLOAT | BOOL | STRING | ScrawArrayType of scrawl_array_type
+and scrawl_array_type =
+    {array_type : scrawl_type; len:int}
 and qual_ident = {ident_type: scrawl_type; ident: string}
 
 
