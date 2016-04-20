@@ -1,18 +1,8 @@
-/* Helper Functions */
-
-/* Takes an argument. If the argument is a list it returns. otherwise returns
-the argument wrapped in a list. I is a prewrapped_expr because it hasn't
-been wrapped by a list yet. */
-type prewrapped_expr = Single of expr | List of expr list
-let packer = function
-    | Single x -> [x]
-    | List x -> x
-
 /* Declare tokens */
-%token <string> INT_LIT
-%token <string> FLOAT_LIT
+%token <int> INT_LIT
+%token <float> FLOAT_LIT
 %token <string> STRING_LIT
-%token <string> BOOL_LIT
+%token <bool> BOOL_LIT
 %token INT_T FLOAT_T STRING_T BOOL_T
 %token BAND BOR BXOR BLEFT BRIGHT BNOT
 %token LAND LOR LNOT LXNOR LXAND LXNAND EQ LESS GREATER
@@ -59,58 +49,58 @@ oh man global error repair is cool. I think we should write that maybe*/
 %start main             /* the entry point */
 %type <Abstract_syntax.abstract_syntax_tree> main
 %%
-/* TODO 0: Add semantic actions for use in building the abstract syntax tree  */
+/* TODO 0: Add pos values for the semantic values  */
 main:
-  | expr_list EOF {$1}
+  | expr_list EOF {Abstract_syntax.AST $1}
 
+/* TODO 1: Possibly distinguish expressions (things that return values) and statements
+           (things that might? definitely? don't). */
 expr:
-  | var {$1}
-  | decl {$1}
+  | var {VarExpr $1}
+  | decl {DeclExpr $1}
   | assign {$1}
   | lambda {$1}
-  | RETURN expr {$1}
-  | INT_LIT {$1}
-  | FLOAT_LIT {$1}
-  | STRING_LIT {$1}
-  | BOOL_LIT {$1}
+  | RETURN expr {$2}
+  | INT_LIT {Abstract_syntax.IntLitExpr {value=$1; pos=0}}
+  | FLOAT_LIT {Abstract_syntax.FloatLitExpr {value=$1; pos=0}}
+  | STRING_LIT {Abstract_syntax.StringLitExpr {value=$1; pos=0}}
+  | BOOL_LIT {Abstract_syntax.BoolLitExpr {value=$1; pos=0}}
   | bin_op_expr {$1}
   | un_op_expr {$1}
   | control_flow {$1}
-  | LPAREN expr RPAREN {$1}
-  | LCURLY expr_list RCURLY {$1}
+  | LPAREN expr RPAREN {$2}
 
 scrawl_type:
   | INT_T {Abstract_syntax.INT}
   | FLOAT_T {Abstract_syntax.FLOAT}
   | STRING_T {Abstract_syntax.STRING}
   | BOOL_T {Abstract_syntax.BOOL}
-  | scrawl_type LSQUARE expr RSQUARE 
-  {Abstract_syntax.ScrawlArrayType {array_type=$1, len=$3}}
+  | scrawl_type LSQUARE INT_LIT RSQUARE {Abstract_syntax.ScrawlArrayType {array_type=$1; len=$3; pos=0}}
 
 var:
-  | IDENT {Abstract_syntax.SimpleVar {ident=$1; pos=lexbuf.Lexing.lex_curr_p}}  /* SimpleVar */
-  | var LSQUARE expr RSQUARE {Abstract_syntax.ArrayVar {arr=$1; idx=$3; pos=lexbuf.Lexing.lex_curr_p}} /* ArrayVar */
+  | IDENT {Abstract_syntax.SimpleVar {ident=$1; pos=0}}  /* SimpleVar */
+  | var LSQUARE expr RSQUARE {Abstract_syntax.ArrayVar {arr=$1; idx=$3; pos=0}} /* ArrayVar */
 
 decl:
   | scrawl_type IDENT 
-    {Abstract_syntax.SimpleDecl {var_type=$1; ident=$2; pos=lexbuf.Lexing.lex_curr_p}} /* SimpleDecl */
-  | scrawl_type IDENT LSQUARE expr RSQUARE 
-    {Abstract_syntax.ArrDecl {arr_type=$1; ident=$2; len=$4; pos=lexbuf.Lexing.lex_curr_p}} /* ArrDecl */
+    {Abstract_syntax.SimpleDecl {var_type=$1; ident=$2; pos=0}} /* SimpleDecl */
+  | scrawl_type IDENT LSQUARE INT_LIT RSQUARE 
+    {Abstract_syntax.ArrDecl {arr_type=$1; ident=$2; len=$4; pos=0}} /* ArrDecl */
   | scrawl_type IDENT LPAREN param_list RPAREN 
-    {Abstract_syntax.FuncDecl {ret_type=$1; ident=$2; params=$4; pos=lexbuf.Lexing.lex_curr_p}} /* FuncDecl */
+    {Abstract_syntax.FuncDecl {ret_type=$1; ident=$2; params=$4; pos=0}} /* FuncDecl */
 
 param_list:
-  | scrawl_type IDENT COMMA param_list {$1 :: $4}
-  | scrawl_type IDENT {[$1]}
+  | scrawl_type IDENT COMMA param_list {Abstract_syntax.QualIdent {ident_type=$1; ident=$2; pos=0} :: $4}
+  | scrawl_type IDENT {[Abstract_syntax.QualIdent {ident_type=$1; ident=$2; pos=0}]}
 
 assign:
-  | var ASSIGN expr {Abstract_syntax.AssignExpr {var=$1; value=$3; pos=lexbuf.Lexing.lex_curr_p}}
+  | var ASSIGN expr {Abstract_syntax.AssignExpr {var=$1; value=$3; pos=0}}
 
 lambda:
-  | LAMBDA LPAREN param_list RPAREN ARROW expr {Abstract_syntax.LambdaExpr {params=$3; body=$6; pos=lexbuf.Lexing.lex_curr_p}}
+  | LAMBDA LPAREN param_list RPAREN ARROW expr {Abstract_syntax.LambdaExpr {params=$3; body=$6; pos=0}}
 
 bin_op_expr:
-  | expr bin_op expr {Abstract_syntax.BinOpExpr {op=$2; argl=$1; argr=$3; pos=lexbuf.Lexing.lex_curr_p}}
+  | expr bin_op expr {Abstract_syntax.BinOpExpr {op=$2; argl=$1; argr=$3; pos=0}}
 
 bin_op:
     | BAND {Abstract_syntax.BAND}
@@ -134,7 +124,7 @@ bin_op:
     | POW {Abstract_syntax.POW}
 
 un_op_expr:
-  | un_op expr {Abstract_syntax.UnpOpExpr {op=$1; arg=$2; pos=lexbuf.Lexing.lex_curr_p}}
+  | un_op expr {Abstract_syntax.UnOpExpr {op=$1; arg=$2; pos=0}}
 
 un_op:
   | BNOT {Abstract_syntax.BNOT}
@@ -142,12 +132,16 @@ un_op:
   | UMINUS {Abstract_syntax.UMINUS}
 
 control_flow:
-  | IF LPAREN expr RPAREN expr {Abstract_syntax.IfExpr {cond=$3; body=$5; pos=lexbuf.Lexing.lex_curr_p}}
-  | IF LPAREN expr RPAREN expr ELSE expr {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr=$7; pos=lexbuf.Lexing.lex_curr_p}}
-  | FOR LPAREN expr SEMICOLON expr SEMICOLON expr RPAREN expr 
-    {Abstract_syntax.ForExpr {iter_var=$3; cond=$5; iter=$7; body=$9; pos=lexbuf.Lexing.lex_curr_p}}
-  | WHILE LPAREN expr RPAREN expr {Abstract_syntax.WhileExpr {cond=$3; body=$5; pos=lexbuf.Lexing.lex_curr_p}}
+  | IF LPAREN expr RPAREN block {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr = None; pos=0}}
+  | IF LPAREN expr RPAREN block ELSE block {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr=$7; pos=0}}
+  | FOR LPAREN expr SEMICOLON expr SEMICOLON expr RPAREN block
+    {Abstract_syntax.ForExpr {iter_var=$3; cond=$5; iter=$7; body=$9; pos=0}}
+  | WHILE LPAREN expr RPAREN block {Abstract_syntax.WhileExpr {cond=$3; body=$5; pos=0}}
+
+block:
+  | LCURLY expr_list RCURLY {$2}
+  | expr SEMICOLON {Abstract_syntax.ExprLst ($1, None)}
 
 expr_list:
-  | expr SEMICOLON expr_list {$1 :: $3}
-  | expr {[$1]}
+  | expr SEMICOLON expr_list {Abstract_syntax.ExprLst ($1, $3)}
+  | expr SEMICOLON {Abstract_syntax.ExprLst ($1, None)}
