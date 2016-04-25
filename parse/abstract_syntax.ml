@@ -5,7 +5,7 @@
 
 (* Many nodes of the abstract syntax tree will hold the position of where the 
    node came from in the original file in order to better report errors *)
-type pos = int
+type pos = int * int (* line * character *)
 
 (* A complete program is just a list of expressions to be sequentially evaluated *)
 type abstract_syntax_tree = AST of expr_list
@@ -50,7 +50,7 @@ and while_expr = {cond: expr; body: expr_list; pos: pos}
 and simple_var = {ident: string; pos: pos} (* An ordinary identifier *)
 and array_var = {arr: var; idx: expr; pos: pos} (* An array along with an index *)
 and simple_decl = {var_type: scrawl_type; ident: string; pos: pos}
-and arr_decl = {arr_type: scrawl_type; ident: string; len: int; pos: pos}
+and arr_decl = {arr_type: scrawl_type; ident: string; pos: pos}
 and func_decl = {ret_type: scrawl_type; ident: string; params: param list; pos: pos}
 and bin_op = 
     | BAND | BOR | BXOR | BLEFT | BRIGHT 

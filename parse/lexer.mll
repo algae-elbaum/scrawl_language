@@ -1,5 +1,10 @@
 {
  open Parser        (* The type token is defined in parser.mli *)
+ let pos_info lexbuf = 
+    let curr = lexbuf.Lexing.lex_curr_p in
+    let line = curr.Lexing.pos_lnum in
+    let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
+    (line, cnum)
 }
 
 let digit = ['0'-'9']
@@ -9,118 +14,60 @@ let str_internal = ([^'"']|("\\\""))* as str
 rule tokenize = parse
     | [' ' '\t']      { tokenize lexbuf }     (* skip blanks *)
 
-    | digit+ as lxm                   { INT_LIT (int_of_string lxm) }
-    | flt as lxm                      { FLOAT_LIT (float_of_string lxm) }
-    | '"' (str_internal as str) '"'   { STRING_LIT str }
-    | "true"                          { BOOL_LIT true }
-    | "false"                         { BOOL_LIT false }
+    | digit+ as lxm                   { INT_LIT ((int_of_string lxm), pos_info lexbuf)}
+    | flt as lxm                      { FLOAT_LIT ((float_of_string lxm), pos_info lexbuf) }
+    | '"' (str_internal as str) '"'   { STRING_LIT (str, pos_info lexbuf) }
+    | "true"                          { BOOL_LIT (true, pos_info lexbuf) }
+    | "false"                         { BOOL_LIT (false, pos_info lexbuf) }
     
-    | "int"     { INT_T }     
-    | "float"   { FLOAT_T }
-    | "bool"    { BOOL_T }
-    | "string"  { STRING_T }
+    | "int"     { INT_T (pos_info lexbuf) }     
+    | "float"   { FLOAT_T (pos_info lexbuf) }
+    | "bool"    { BOOL_T (pos_info lexbuf) }
+    | "string"  { STRING_T (pos_info lexbuf) }
 
-    | "&"       { BAND }
-    | "|"       { BOR }
-    | '^'       { BXOR }
-    | "<<"      { BLEFT }
-    | ">>"      { BRIGHT }
-    | '~'       { BNOT }
-    | "&&"      { LAND }
-    | "and"     { LAND }
-    | "||"      { LOR }
-    | "or"      { LOR }
-    | '!'       { LNOT }
-    | "not"     { LNOT }
-    | "=="      { EQ }
-    | "is"      { EQ }
-    | '<'       { GREATER }
-    | '>'       { LESS }
-    | '+'       { PLUS }
-    | '-'       { MINUS }
-    | '*'       { TIMES }
-    | '/'       { DIV }
-    | '%'       { MOD }
-    | "**"      { POW }
-    | '='       { ASSIGN }
+    | "&"       { BAND (pos_info lexbuf) }
+    | "|"       { BOR (pos_info lexbuf) }
+    | '^'       { BXOR (pos_info lexbuf) }
+    | "<<"      { BLEFT (pos_info lexbuf) }
+    | ">>"      { BRIGHT (pos_info lexbuf) }
+    | '~'       { BNOT (pos_info lexbuf) }
+    | "&&"      { LAND (pos_info lexbuf) }
+    | "and"     { LAND (pos_info lexbuf) }
+    | "||"      { LOR (pos_info lexbuf) }
+    | "or"      { LOR (pos_info lexbuf) }
+    | '!'       { LNOT (pos_info lexbuf) }
+    | "not"     { LNOT (pos_info lexbuf) }
+    | "=="      { EQ (pos_info lexbuf) }
+    | "is"      { EQ (pos_info lexbuf) }
+    | '<'       { GREATER (pos_info lexbuf) }
+    | '>'       { LESS (pos_info lexbuf) }
+    | '+'       { PLUS (pos_info lexbuf) }
+    | '-'       { MINUS (pos_info lexbuf) }
+    | '*'       { TIMES (pos_info lexbuf) }
+    | '/'       { DIV (pos_info lexbuf) }
+    | '%'       { MOD (pos_info lexbuf) }
+    | "**"      { POW (pos_info lexbuf) }
+    | '='       { ASSIGN (pos_info lexbuf) }
 
-    | "if"      { IF }
-    | "else"    { ELSE }
-    | "for"     { FOR }
-    | "while"   { WHILE }
+    | "if"      { IF (pos_info lexbuf) }
+    | "else"    { ELSE (pos_info lexbuf) }
+    | "for"     { FOR (pos_info lexbuf) }
+    | "while"   { WHILE (pos_info lexbuf) }
 
-    | character+ as ident   { IDENT ident }
+    | character+ as ident   { IDENT (ident, pos_info lexbuf) }
 
-    | '('       { LPAREN }
-    | ')'       { RPAREN }
-    | '{'       { LCURLY }
-    | '}'       { RCURLY }
-    | '['       { LSQUARE }
-    | ']'       { RSQUARE }
-    | ';'       { SEMICOLON }
-    | ','       { COMMA }
-    | "->"      { ARROW }
-    | "lambda"  { LAMBDA }
-    | "return"  { RETURN }
-    | ['\n' ]   { EOL }
-    | eof       { EOF }
-    | _         { SYNTAX_ERROR }
+    | '('       { LPAREN (pos_info lexbuf) }
+    | ')'       { RPAREN (pos_info lexbuf) }
+    | '{'       { LCURLY (pos_info lexbuf) }
+    | '}'       { RCURLY (pos_info lexbuf) }
+    | '['       { LSQUARE (pos_info lexbuf) }
+    | ']'       { RSQUARE (pos_info lexbuf) }
+    | ';'       { SEMICOLON (pos_info lexbuf) }
+    | ','       { COMMA (pos_info lexbuf) }
+    | "->"      { ARROW (pos_info lexbuf) }
+    | "lambda"  { LAMBDA (pos_info lexbuf) }
+    | "return"  { RETURN (pos_info lexbuf) }
+    | ['\n' ]   { EOL (pos_info lexbuf) }
+    | eof       { EOF (pos_info lexbuf) }
+    | _         { SYNTAX_ERROR (pos_info lexbuf) }
 
-{
-let tokstr = function
-  | INT_LIT i -> "(INT_LIT " ^ (string_of_int i) ^ ")"
-  | FLOAT_LIT f -> "(FLOAT_LIT " ^ (string_of_float f) ^ ")"
-  | STRING_LIT str -> "(STRING_LIT \"" ^ str ^ "\")"
-  | BOOL_LIT b-> "(BOOL_LIT " ^ (string_of_bool b) ^ ")"
-
-  | INT_T -> "INT_T"
-  | FLOAT_T -> "FLOAT_T"
-  | BOOL_T -> "BOOL_T"
-  | STRING_T -> "STRING_T"
-
-  | BAND -> "BAND"
-  | BOR  -> "BOR"
-  | BXOR -> "BXOR"
-  | BLEFT -> "BLEFT"
-  | BRIGHT -> "BRIGHT"
-  | BNOT -> "BNOT"
-  | LAND -> "LAND"
-  | LOR -> "LOR"
-  | LNOT -> "LNOT"
-  | LXNOR -> "LXNOR"
-  | LXNAND -> "LXNAND"
-  | LXAND -> "LXAND"
-  | EQ -> "EQ"
-  | LESS -> "LESS"
-  | GREATER -> "GREATER"
-  | PLUS -> "PLUS"
-  | MINUS -> "MINUS"
-  | UMINUS -> "UMINUS"
-  | TIMES -> "TIMES"
-  | DIV -> "DIV"
-  | MOD -> "MOD"
-  | POW -> "POW"
-  | ASSIGN -> "ASSIGN"
-
-  | IF -> "IF"
-  | ELSE -> "ELSE"
-  | FOR -> "FOR"
-  | WHILE -> "WHILE"
-
-  | IDENT str -> "(IDENT " ^ str ^ ")"
-
-  | LPAREN -> "LPAREN"
-  | RPAREN -> "RPAREN"
-  | LCURLY -> "LCURLY"
-  | RCURLY -> "RCURLY"
-  | LSQUARE -> "LSQUARE"
-  | RSQUARE -> "RSQUARE"
-  | SEMICOLON -> "SEMICOLON"
-  | COMMA -> "COMMA"
-  | ARROW -> "ARROW"
-  | LAMBDA -> "LAMBDA"
-  | EOL -> "EOL\n"
-  | EOF -> "EOF"
-  | SYNTAX_ERROR -> "Syntax error. An error probably should have been raised\n"
-
-}

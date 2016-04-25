@@ -1,22 +1,22 @@
 /* Declare tokens */
-%token <int> INT_LIT
-%token <float> FLOAT_LIT
-%token <string> STRING_LIT
-%token <bool> BOOL_LIT
-%token INT_T FLOAT_T STRING_T BOOL_T
-%token BAND BOR BXOR BLEFT BRIGHT BNOT
-%token LAND LOR LNOT LXNOR LXAND LXNAND EQ LESS GREATER
-%token PLUS MINUS TIMES DIV MOD POW UMINUS
-%token ASSIGN
-%token <string> IDENT
-%token IF ELSE FOR WHILE LAMBDA ARROW RETURN
-%token LPAREN RPAREN LCURLY RCURLY LSQUARE RSQUARE
-%token SEMICOLON
-%token EOL EOF
-%token COMMA
+%token <int * Abstract_syntax.pos> INT_LIT
+%token <float * Abstract_syntax.pos> FLOAT_LIT
+%token <string * Abstract_syntax.pos> STRING_LIT
+%token <bool * Abstract_syntax.pos> BOOL_LIT
+%token <Abstract_syntax.pos> INT_T FLOAT_T STRING_T BOOL_T
+%token <Abstract_syntax.pos> BAND BOR BXOR BLEFT BRIGHT BNOT
+%token <Abstract_syntax.pos> LAND LOR LNOT LXNOR LXAND LXNAND EQ LESS GREATER
+%token <Abstract_syntax.pos> PLUS MINUS TIMES DIV MOD POW UMINUS
+%token <Abstract_syntax.pos> ASSIGN
+%token <string * Abstract_syntax.pos> IDENT
+%token <Abstract_syntax.pos> IF ELSE FOR WHILE LAMBDA ARROW RETURN
+%token <Abstract_syntax.pos> LPAREN RPAREN LCURLY RCURLY LSQUARE RSQUARE
+%token <Abstract_syntax.pos> SEMICOLON
+%token <Abstract_syntax.pos> EOL EOF
+%token <Abstract_syntax.pos> COMMA
 /* Not quite a token, but doing it this way leads to more functional
    code for catching a syntax error when parsing a file */
-%token SYNTAX_ERROR
+%token <Abstract_syntax.pos> SYNTAX_ERROR
 
 /* Set symbol precedence */
 /* Lowest priority things up top */
@@ -61,82 +61,98 @@ expr:
   | assign {$1}
   | lambda {$1}
   | RETURN expr {$2}
-  | INT_LIT {Abstract_syntax.IntLitExpr {value=$1; pos=0}}
-  | FLOAT_LIT {Abstract_syntax.FloatLitExpr {value=$1; pos=0}}
-  | STRING_LIT {Abstract_syntax.StringLitExpr {value=$1; pos=0}}
-  | BOOL_LIT {Abstract_syntax.BoolLitExpr {value=$1; pos=0}}
-  | bin_op_expr {$1}
+  | INT_LIT {Abstract_syntax.IntLitExpr {value=fst $1; pos=snd $1}}
+  | FLOAT_LIT {Abstract_syntax.FloatLitExpr {value=fst $1; pos=snd $1}}
+  | STRING_LIT {Abstract_syntax.StringLitExpr {value=fst $1; pos=snd $1}}
+  | BOOL_LIT {Abstract_syntax.BoolLitExpr {value=fst $1; pos=snd $1}}
+ | bin_op_expr {$1}
   | un_op_expr {$1}
   | control_flow {$1}
   | LPAREN expr RPAREN {$2}
 
 scrawl_type:
+  | simple_type {$1}
+  | arr_type {$1}
+
+simple_type:
   | INT_T {Abstract_syntax.INT}
   | FLOAT_T {Abstract_syntax.FLOAT}
   | STRING_T {Abstract_syntax.STRING}
   | BOOL_T {Abstract_syntax.BOOL}
-  | scrawl_type LSQUARE INT_LIT RSQUARE {Abstract_syntax.ScrawlArrayType {array_type=$1; len=$3; pos=0}}
+
+arr_type:
+  (* pos at square brace to differentiate different dimensions *)
+  | scrawl_type LSQUARE INT_LIT RSQUARE 
+    {Abstract_syntax.ScrawlArrayType {array_type=$1; len=fst $3; pos=$2}}
 
 var:
-  | IDENT {Abstract_syntax.SimpleVar {ident=$1; pos=0}}  /* SimpleVar */
-  | var LSQUARE expr RSQUARE {Abstract_syntax.ArrayVar {arr=$1; idx=$3; pos=0}} /* ArrayVar */
+  | IDENT {Abstract_syntax.SimpleVar {ident=fst $1; pos=snd $1}}  /* SimpleVar */
+  (* pos at square brace to differentiate different dimensions *)
+  | var LSQUARE expr RSQUARE 
+    {Abstract_syntax.ArrayVar {arr=$1; idx=$3; pos=$2}} /* ArrayVar */
 
 decl:
-  | scrawl_type IDENT 
-    {Abstract_syntax.SimpleDecl {var_type=$1; ident=$2; pos=0}} /* SimpleDecl */
-  | scrawl_type IDENT LSQUARE INT_LIT RSQUARE 
-    {Abstract_syntax.ArrDecl {arr_type=$1; ident=$2; len=$4; pos=0}} /* ArrDecl */
-  | scrawl_type IDENT LPAREN param_list RPAREN 
-    {Abstract_syntax.FuncDecl {ret_type=$1; ident=$2; params=$4; pos=0}} /* FuncDecl */
+  | simple_type IDENT  /* SimpleDecl */
+    {Abstract_syntax.SimpleDecl {var_type=$1; ident=fst $2; pos=snd $2}}
+  | arr_type IDENT  /* ArrDecl */
+    {Abstract_syntax.ArrDecl {arr_type=$1; ident=fst $2; pos=snd $2}}
+  | scrawl_type IDENT LPAREN param_list RPAREN  /* FuncDecl */
+    {Abstract_syntax.FuncDecl {ret_type=$1; ident=fst $2; params=$4; pos=snd $2}}
 
 param_list:
-  | scrawl_type IDENT COMMA param_list {Abstract_syntax.QualIdent {ident_type=$1; ident=$2; pos=0} :: $4}
-  | scrawl_type IDENT {[Abstract_syntax.QualIdent {ident_type=$1; ident=$2; pos=0}]}
+  | scrawl_type IDENT COMMA param_list 
+    {Abstract_syntax.QualIdent {ident_type=$1; ident=fst $2; pos=snd $2} :: $4}
+  | scrawl_type IDENT 
+    {[Abstract_syntax.QualIdent {ident_type=$1; ident=fst $2; pos=snd $2}]}
 
 assign:
-  | var ASSIGN expr {Abstract_syntax.AssignExpr {var=$1; value=$3; pos=0}}
+  | var ASSIGN expr {Abstract_syntax.AssignExpr {var=$1; value=$3; pos=$2}}
 
 lambda:
-  | LAMBDA LPAREN param_list RPAREN ARROW expr {Abstract_syntax.LambdaExpr {params=$3; body=$6; pos=0}}
+  | LAMBDA LPAREN param_list RPAREN ARROW expr 
+    {Abstract_syntax.LambdaExpr {params=$3; body=$6; pos=$1}}
 
 bin_op_expr:
-  | expr bin_op expr {Abstract_syntax.BinOpExpr {op=$2; argl=$1; argr=$3; pos=0}}
+  | expr bin_op expr {Abstract_syntax.BinOpExpr {op=fst $2; argl=$1; argr=$3; pos=snd $2}}
 
 bin_op:
-    | BAND {Abstract_syntax.BAND}
-    | BOR {Abstract_syntax.BOR}
-    | BXOR {Abstract_syntax.BXOR}
-    | BLEFT {Abstract_syntax.BLEFT}
-    | BRIGHT {Abstract_syntax.BRIGHT}
-    | LAND {Abstract_syntax.LAND}
-    | LOR {Abstract_syntax.LOR}
-    | LXNOR {Abstract_syntax.LXNOR}
-    | LXAND {Abstract_syntax.LXAND}
-    | LXNAND {Abstract_syntax.LXNAND}
-    | EQ {Abstract_syntax.EQ}
-    | LESS {Abstract_syntax.LESS}
-    | GREATER {Abstract_syntax.GREATER}
-    | PLUS {Abstract_syntax.PLUS}
-    | MINUS {Abstract_syntax.MINUS}
-    | TIMES {Abstract_syntax.TIMES}
-    | DIV {Abstract_syntax.DIV}
-    | MOD {Abstract_syntax.MOD}
-    | POW {Abstract_syntax.POW}
+    | BAND {Abstract_syntax.BAND, $1}
+    | BOR {Abstract_syntax.BOR, $1}
+    | BXOR {Abstract_syntax.BXOR, $1}
+    | BLEFT {Abstract_syntax.BLEFT, $1}
+    | BRIGHT {Abstract_syntax.BRIGHT, $1}
+    | LAND {Abstract_syntax.LAND, $1}
+    | LOR {Abstract_syntax.LOR, $1}
+    | LXNOR {Abstract_syntax.LXNOR, $1}
+    | LXAND {Abstract_syntax.LXAND, $1}
+    | LXNAND {Abstract_syntax.LXNAND, $1}
+    | EQ {Abstract_syntax.EQ, $1}
+    | LESS {Abstract_syntax.LESS, $1}
+    | GREATER {Abstract_syntax.GREATER, $1}
+    | PLUS {Abstract_syntax.PLUS, $1}
+    | MINUS {Abstract_syntax.MINUS, $1}
+    | TIMES {Abstract_syntax.TIMES, $1}
+    | DIV {Abstract_syntax.DIV, $1}
+    | MOD {Abstract_syntax.MOD, $1}
+    | POW {Abstract_syntax.POW, $1}
 
 un_op_expr:
-  | un_op expr {Abstract_syntax.UnOpExpr {op=$1; arg=$2; pos=0}}
+  | un_op expr {Abstract_syntax.UnOpExpr {op=fst $1; arg=$2; pos=snd $1}}
 
 un_op:
-  | BNOT {Abstract_syntax.BNOT}
-  | LNOT {Abstract_syntax.LNOT}
-  | UMINUS {Abstract_syntax.UMINUS}
+  | BNOT {Abstract_syntax.BNOT, $1}
+  | LNOT {Abstract_syntax.LNOT, $1}
+  | UMINUS {Abstract_syntax.UMINUS, $1}
 
 control_flow:
-  | IF LPAREN expr RPAREN block {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr = None; pos=0}}
-  | IF LPAREN expr RPAREN block ELSE block {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr=$7; pos=0}}
+  | IF LPAREN expr RPAREN block 
+    {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr = None; pos=$1}}
+  | IF LPAREN expr RPAREN block ELSE block 
+    {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr=$7; pos=$1}}
   | FOR LPAREN expr SEMICOLON expr SEMICOLON expr RPAREN block
-    {Abstract_syntax.ForExpr {iter_var=$3; cond=$5; iter=$7; body=$9; pos=0}}
-  | WHILE LPAREN expr RPAREN block {Abstract_syntax.WhileExpr {cond=$3; body=$5; pos=0}}
+    {Abstract_syntax.ForExpr {iter_var=$3; cond=$5; iter=$7; body=$9; pos=$1}}
+  | WHILE LPAREN expr RPAREN block 
+    {Abstract_syntax.WhileExpr {cond=$3; body=$5; pos=$1}}
 
 block:
   | LCURLY expr_list RCURLY {$2}

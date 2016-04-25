@@ -38,7 +38,7 @@ let lex_assoc_test () =
     let file = open_in "parse/lex_assoc_test.sc" in
     let try_wrap () =
         try
-            List.iter (fun s -> Printf.printf "%s " (Lexer.tokstr s)) (Lex.tok_lst file);
+            List.iter (fun s -> Printf.printf "%s " (Lex.tokstr s)) (Lex.tok_lst file);
             true
         with Parsing_globals.Syntax_error (line_n, tok_n) ->
             Printf.printf "\n\nSyntax error at line %d after token %d\n" line_n tok_n;
@@ -48,7 +48,7 @@ let lex_assoc_test () =
 (* Print the result of lexing a file *)
 let lex_test file =
     try
-        List.iter (fun s -> Printf.printf "%s " (Lexer.tokstr s)) (Lex.tok_lst file)
+        List.iter (fun s -> Printf.printf "%s " (Lex.tokstr s)) (Lex.tok_lst file)
     with Parsing_globals.Syntax_error (line_n, tok_n) -> 
         Printf.printf "\n\nSyntax error at line %d after token %d\n" line_n tok_n;
         raise (Parsing_globals.Syntax_error (line_n, tok_n))
