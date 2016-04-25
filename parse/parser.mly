@@ -5,7 +5,7 @@
 %token <bool * Abstract_syntax.pos> BOOL_LIT
 %token <Abstract_syntax.pos> INT_T FLOAT_T STRING_T BOOL_T
 %token <Abstract_syntax.pos> BAND BOR BXOR BLEFT BRIGHT BNOT
-%token <Abstract_syntax.pos> LAND LOR LNOT LXNOR LXAND LXNAND EQ LESS GREATER
+%token <Abstract_syntax.pos> LAND LOR LNOT EQ LESS GREATER
 %token <Abstract_syntax.pos> PLUS MINUS TIMES DIV MOD POW UMINUS
 %token <Abstract_syntax.pos> ASSIGN
 %token <string * Abstract_syntax.pos> IDENT
@@ -20,12 +20,10 @@
 
 /* Set symbol precedence */
 /* Lowest priority things up top */
-/* COMMENTED OUT TO WORK ON GETTING OTHER STUFF TO COMPILE BETTER
-   TODO 0 get this stuff in order
-%right IF FOR WHILE LAMBDA
+%right RETURN
+%right IF
 %right ELSE
 %left ASSIGN 
-%right INT_T FLOAT_T STRING_T BOOL_T
 %left LOR
 %left LAND
 %left BOR
@@ -33,15 +31,11 @@
 %left BAND
 %left EQ
 %left LESS GREATER
-%left BLEFT BRIGHT 
 %left PLUS MINUS   
 %left TIMES DIV MOD
+%right UMINUS
+%left BLEFT BRIGHT 
 %left POW
-%right BNOT LNOT
-%left SEMICOLON
-%right LPAREN LSQUARE LCURLY
-%left RPAREN RSQUARE RCURLY
-*/
 /* Highest priority things down bottom */
 
 /* TODO 2 include error terms so that we don't get one syntax error per compile 
@@ -65,10 +59,11 @@ expr:
   | FLOAT_LIT {Abstract_syntax.FloatLitExpr {value=fst $1; pos=snd $1}}
   | STRING_LIT {Abstract_syntax.StringLitExpr {value=fst $1; pos=snd $1}}
   | BOOL_LIT {Abstract_syntax.BoolLitExpr {value=fst $1; pos=snd $1}}
- | bin_op_expr {$1}
+  | bin_op_expr {$1}
   | un_op_expr {$1}
   | control_flow {$1}
   | LPAREN expr RPAREN {$2}
+
 
 scrawl_type:
   | simple_type {$1}
@@ -96,7 +91,13 @@ decl:
     {Abstract_syntax.SimpleDecl {var_type=$1; ident=fst $2; pos=snd $2}}
   | arr_type IDENT  /* ArrDecl */
     {Abstract_syntax.ArrDecl {arr_type=$1; ident=fst $2; pos=snd $2}}
-  | scrawl_type IDENT LPAREN param_list RPAREN  /* FuncDecl */
+  | func_decl {$1}
+
+func_decl:
+  | scrawl_type IDENT LPAREN param_list RPAREN
+    {Abstract_syntax.FuncDecl {ret_type=$1; ident=fst $2; params=$4; pos=snd $2}}
+  (* We count definition at the time of declaration as part of declaration *)
+  | scrawl_type IDENT LPAREN param_list RPAREN block
     {Abstract_syntax.FuncDecl {ret_type=$1; ident=fst $2; params=$4; pos=snd $2}}
 
 param_list:
@@ -109,7 +110,7 @@ assign:
   | var ASSIGN expr {Abstract_syntax.AssignExpr {var=$1; value=$3; pos=$2}}
 
 lambda:
-  | LAMBDA LPAREN param_list RPAREN ARROW expr 
+  | LAMBDA LPAREN param_list RPAREN ARROW block 
     {Abstract_syntax.LambdaExpr {params=$3; body=$6; pos=$1}}
 
 bin_op_expr:
@@ -123,9 +124,6 @@ bin_op:
     | BRIGHT {Abstract_syntax.BRIGHT, $1}
     | LAND {Abstract_syntax.LAND, $1}
     | LOR {Abstract_syntax.LOR, $1}
-    | LXNOR {Abstract_syntax.LXNOR, $1}
-    | LXAND {Abstract_syntax.LXAND, $1}
-    | LXNAND {Abstract_syntax.LXNAND, $1}
     | EQ {Abstract_syntax.EQ, $1}
     | LESS {Abstract_syntax.LESS, $1}
     | GREATER {Abstract_syntax.GREATER, $1}
@@ -137,7 +135,7 @@ bin_op:
     | POW {Abstract_syntax.POW, $1}
 
 un_op_expr:
-  | un_op expr {Abstract_syntax.UnOpExpr {op=fst $1; arg=$2; pos=snd $1}}
+  | un_op expr %prec UMINUS {Abstract_syntax.UnOpExpr {op=fst $1; arg=$2; pos=snd $1}}
 
 un_op:
   | BNOT {Abstract_syntax.BNOT, $1}
@@ -156,7 +154,6 @@ control_flow:
 
 block:
   | LCURLY expr_list RCURLY {$2}
-  | expr SEMICOLON {Abstract_syntax.ExprLst ($1, None)}
 
 expr_list:
   | expr SEMICOLON expr_list {Abstract_syntax.ExprLst ($1, $3)}

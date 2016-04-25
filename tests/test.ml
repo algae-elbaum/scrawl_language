@@ -3,8 +3,7 @@
    Test functions should return a boolean indicating their success or failure.
    TODO 4 get a real test framework set up?  
  *)
-let tests = [("Lex ok test", Lex_tests.lex_ok_test ());
-             ("Lex bad test", Lex_tests.lex_bad_test ())] in
+let tests = Lex_tests.test_list @ Parse_tests.test_list in
 
 let print_and_ret test =
     match test with

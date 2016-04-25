@@ -36,7 +36,7 @@ and decl =
     | FuncDecl of func_decl
 (* Good god why doesn't ocaml have anonymous record types *)
 and assign = {var : var; value : expr; pos : pos}
-and lambda = {params: param list; body: expr; pos: pos}
+and lambda = {params: param list; body: expr_list; pos: pos}
 and int_lit = {value: int; pos: pos}
 and float_lit = {value: float; pos: pos}
 and string_lit = {value: string; pos: pos}

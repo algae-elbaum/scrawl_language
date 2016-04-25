@@ -1,17 +1,11 @@
 all: scrawlc test
 
-scrawlc: parse/lexer.mll parse/lex.ml \
-         parse/abstract_syntax.ml \
-         parse/parser.mly parse/parse.ml \
-         scrawlc.ml
+scrawlc: parse/* scrawlc.ml
 	@ocamlbuild -use-menhir -I parse scrawlc.native
 	@mv scrawlc.native scrawlc
 
-test: parse/lexer.mll parse/lex.ml parse/lex_tests.ml \
-      parse/abstract_syntax.ml \
-      parse/parser.mly parse/parse.ml parse/parse_tests.ml \
-      test.ml
-	@ocamlbuild -use-menhir -I parse test.native
+test: parse/* tests/*
+	@ocamlbuild -use-menhir -Is parse,tests test.native
 	@mv test.native test
 
 clean:
