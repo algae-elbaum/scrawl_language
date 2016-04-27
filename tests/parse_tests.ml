@@ -6,7 +6,7 @@ let parse_ok_test () =
         let lexbuf = Lexing.from_channel file in
         try
             let result = Parser.main Lexer.tokenize lexbuf in
-            Printf.printf "Successfully parsed\n\n";
+            Printf.printf "Successfully parsed\n";
             close_in file;
             true
         with

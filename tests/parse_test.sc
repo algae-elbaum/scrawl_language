@@ -1,1 +1,3 @@
-this_is_an_ident;
+simple_var;
+array_var[1];
+

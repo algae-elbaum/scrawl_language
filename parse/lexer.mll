@@ -1,24 +1,40 @@
 {
+ open Lexing
  open Parser        (* The type token is defined in parser.mli *)
  let pos_info lexbuf = 
     let curr = lexbuf.Lexing.lex_curr_p in
     let line = curr.Lexing.pos_lnum in
     let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
     (line, cnum)
+
+let next_line lexbuf =
+  let pos = lexbuf.lex_curr_p in
+  lexbuf.lex_curr_p <-
+    { pos with pos_bol = lexbuf.lex_curr_pos;
+               pos_lnum = pos.pos_lnum + 1
+    }
 }
 
 let digit = ['0'-'9']
-let character = ['A'-'z' '_']
-let flt = ((digit+ '.' digit*) | (digit* '.' digit+))
+let digit = ['0'-'9']
+let frac = '.' digit*
+let exp = ['e' 'E'] ['-' '+']? digit+
+let flt = digit* frac? exp?
+let white = [' ' '\t']+
+let newline = '\r' | '\n' | "\r\n"
+let id = ['A'-'z' '_'] ['A'-'z' '0'-'9' '_']*
+
 let str_internal = ([^'"']|("\\\""))* as str
 rule tokenize = parse
-    | [' ' '\t' '\n']      { tokenize lexbuf }     (* skip blanks *)
+    | white      { tokenize lexbuf }     (* skip blanks *)
+    | newline   { next_line lexbuf; tokenize lexbuf }
 
-    | digit+ as lxm                   { INT_LIT ((int_of_string lxm), pos_info lexbuf)}
+    | '-'? digit+ as lxm              { INT_LIT ((int_of_string lxm), pos_info lexbuf)}
     | flt as lxm                      { FLOAT_LIT ((float_of_string lxm), pos_info lexbuf) }
     | '"' (str_internal as str) '"'   { STRING_LIT (str, pos_info lexbuf) }
     | "true"                          { BOOL_LIT (true, pos_info lexbuf) }
     | "false"                         { BOOL_LIT (false, pos_info lexbuf) }
+    | id as ident                     { IDENT (ident, pos_info lexbuf) }
     
     | "int"     { INT_T (pos_info lexbuf) }     
     | "float"   { FLOAT_T (pos_info lexbuf) }
@@ -54,8 +70,6 @@ rule tokenize = parse
     | "for"     { FOR (pos_info lexbuf) }
     | "while"   { WHILE (pos_info lexbuf) }
 
-    | character+ as ident   { IDENT (ident, pos_info lexbuf) }
-
     | '('       { LPAREN (pos_info lexbuf) }
     | ')'       { RPAREN (pos_info lexbuf) }
     | '{'       { LCURLY (pos_info lexbuf) }
@@ -68,7 +82,6 @@ rule tokenize = parse
     | "fun"     { FUNCSTART (pos_info lexbuf) }
     | "lambda"  { LAMBDA (pos_info lexbuf) }
     | "return"  { RETURN (pos_info lexbuf) }
-   (* | ['\n' ]   { EOL (pos_info lexbuf) } *)
     | eof       { EOF (pos_info lexbuf) }
     | _         { SYNTAX_ERROR (pos_info lexbuf) }
 
