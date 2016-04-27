@@ -1,4 +1,4 @@
-/* Declare tokens */
+(* Declare tokens *)
 %token <int * Abstract_syntax.pos> INT_LIT
 %token <float * Abstract_syntax.pos> FLOAT_LIT
 %token <string * Abstract_syntax.pos> STRING_LIT
@@ -15,17 +15,17 @@
 %token <Abstract_syntax.pos> EOL EOF
 %token <Abstract_syntax.pos> COMMA
 %token <Abstract_syntax.pos> FUNCSTART
-/* Not quite a token, but doing it this way leads to more functional
-   code for catching a syntax error when parsing a file */
+(* Not quite a token, but doing it this way leads to more functional
+   code for catching a syntax error when parsing a file *)
 %token <Abstract_syntax.pos> SYNTAX_ERROR
 
-/* Set symbol precedence */
-/* Lowest priority things up top */
+(* Set symbol precedence *)
+(* Lowest priority things up top *)
 %right RETURN
 
-/* %right IF
+(* %right IF
 %nonassoc THEN
-%right ELSE */
+%right ELSE *)
 
 %left ASSIGN 
 %left LOR
@@ -40,19 +40,18 @@
 %right UMINUS
 %left BLEFT BRIGHT 
 %left POW
-/* Highest priority things down bottom */
+(* Highest priority things down bottom *)
 
-/* TODO 2 include error terms so that we don't get one syntax error per compile 
-oh man global error repair is cool. I think we should write that maybe*/
-%start main             /* the entry point */
+(* TODO 2 include error terms so that we don't get one syntax error per compile 
+oh man global error repair is cool. I think we should write that maybe*)
+%start main             (* the entry point *)
 %type <Abstract_syntax.abstract_syntax_tree> main
 %%
-/* TODO 0: Add pos values for the semantic values  */
 main:
   | expr_list EOF {Abstract_syntax.AST $1}
 
-/* TODO 1: Possibly distinguish expressions (things that return values) and statements
-           (things that might? definitely? don't). */
+(* TODO 3: Possibly distinguish expressions (things that return values) and statements
+           (things that might? definitely? don't). *)
 expr:
   | var {VarExpr $1}
   | decl {DeclExpr $1}
@@ -80,27 +79,27 @@ simple_type:
   | BOOL_T {Abstract_syntax.BOOL}
 
 arr_type:
-  /* pos at square brace to differentiate different dimensions */
+  (* pos at square brace to differentiate different dimensions *)
   | scrawl_type LSQUARE INT_LIT RSQUARE 
     {Abstract_syntax.ScrawlArrayType {array_type=$1; len=fst $3; pos=$2}}
 
 var:
-  | IDENT {Abstract_syntax.SimpleVar {ident=fst $1; pos=snd $1}}  /* SimpleVar */
-  /* pos at square brace to differentiate different dimensions */
+  | IDENT {Abstract_syntax.SimpleVar {ident=fst $1; pos=snd $1}}  (* SimpleVar *)
+  (* pos at square brace to differentiate different dimensions *)
   | var LSQUARE expr RSQUARE 
-    {Abstract_syntax.ArrayVar {arr=$1; idx=$3; pos=$2}} /* ArrayVar */
+    {Abstract_syntax.ArrayVar {arr=$1; idx=$3; pos=$2}} (* ArrayVar *)
 
 decl:
-  | simple_type IDENT  /* SimpleDecl */
+  | simple_type IDENT  (* SimpleDecl *)
     {Abstract_syntax.SimpleDecl {var_type=$1; ident=fst $2; pos=snd $2}}
-  | arr_type IDENT /* ArrDecl */
+  | arr_type IDENT (* ArrDecl *)
     {Abstract_syntax.ArrDecl {arr_type=$1; ident=fst $2; pos=snd $2}}
   | FUNCSTART func_decl {$2} 
 
 func_decl:
   | scrawl_type IDENT LPAREN param_list RPAREN
     {Abstract_syntax.FuncDecl {ret_type=$1; ident=fst $2; params=$4; pos=snd $2}}
-  /* We count definition at the time of declaration as part of declaration */
+  (* We count definition at the time of declaration as part of declaration *)
   | scrawl_type IDENT LPAREN param_list RPAREN block
     {Abstract_syntax.FuncDecl {ret_type=$1; ident=fst $2; params=$4; pos=snd $2}}
 

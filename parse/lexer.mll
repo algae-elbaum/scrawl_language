@@ -1,18 +1,22 @@
 {
  open Lexing
  open Parser        (* The type token is defined in parser.mli *)
+
+ (** Function to extract the current line number and character number *)
  let pos_info lexbuf = 
     let curr = lexbuf.Lexing.lex_curr_p in
     let line = curr.Lexing.pos_lnum in
     let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
     (line, cnum)
 
-let next_line lexbuf =
-  let pos = lexbuf.lex_curr_p in
-  lexbuf.lex_curr_p <-
-    { pos with pos_bol = lexbuf.lex_curr_pos;
-               pos_lnum = pos.pos_lnum + 1
-    }
+ (** Function to tell the lexbuf that a newline has been reached *)
+ let next_line lexbuf =
+    let pos = lexbuf.lex_curr_p in
+    lexbuf.lex_curr_p <-
+        { 
+            pos with pos_bol = lexbuf.lex_curr_pos;
+            pos_lnum = pos.pos_lnum + 1
+        }
 }
 
 let digit = ['0'-'9']

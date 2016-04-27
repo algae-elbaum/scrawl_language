@@ -1,10 +1,15 @@
-(* Basic test script. Write test functions and stick them in here if you want
-   run in the test executable.
-   Test functions should return a boolean indicating their success or failure.
-   TODO 4 get a real test framework set up?  
+(** This is what is run by the test executible.
+    To add more tests, create a module for your tests and place inside of it
+    a test_list in the same format as in eg lex_tests.ml or parse_tests.ml. Tests
+    must return a bool reporting their success or failure 
+
+   TODO 4 get a prebuild test library set up intead of this?  
  *)
+
+(** The list of tests to be run *)
 let tests = Lex_tests.test_list @ Parse_tests.test_list in
 
+(** A function to run a given test and return a tuple of its name and return value *)
 let run_test (name, test) = 
     let res = (name, test ()) in
     Printf.printf "\n";
@@ -14,6 +19,7 @@ in
 (* Run the tests *)
 let tests_run = List.map run_test tests in
 
+(** A function to report success or failure for a given test that's been run *)
 let print_and_ret test =
     match test with
     | (name, true) -> (Printf.printf "Passed: %s\n" name; 1)

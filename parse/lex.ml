@@ -1,11 +1,7 @@
 
-(* For now, let's just use ocamllex so we can get to the semantic analysis right 
-   away.
-   TODO 5 come back and make our own lexer and parser in the future *)
-
-(* Get the list of tokens for a file. If there's a syntax error, raise a
-   Syntax_error with the line number and how many tokens had been successfully
-   read on that line *)
+(** Function to lex a given file into a list of the tokens that make it up. If 
+    there's a syntax error, a Parsing_globals.Syntax_error is raised with the 
+    line number and character of the error *)
 let tok_lst filename =
     let file = open_in filename in
     let lexbuf = Lexing.from_channel file in
@@ -27,7 +23,7 @@ let tok_lst filename =
     res
 
     
-    
+(** Function to translate a token into a string (TODO 5 rename to string_of_tok) *)  
 let tokstr = function
   | Parser.INT_LIT (i, _) -> "(INT_LIT " ^ (string_of_int i) ^ ")"
   | Parser.FLOAT_LIT (f, _) -> "(FLOAT_LIT " ^ (string_of_float f) ^ ")"

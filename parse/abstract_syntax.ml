@@ -1,15 +1,16 @@
-(* Definition of the abstract syntax for scrawl. The parser builds up a tree
-   of type abstract_syntax_tree as it goes through the input program and parses
-   it according to the concrete syntax. The abstract syntax tree is what will be
-   used in syntactic analysis *)
+(** Definition of the abstract syntax for scrawl. The parser builds up a tree
+    of type abstract_syntax_tree as it goes through the input program and parses
+    it according to the concrete syntax. The abstract syntax tree is what will be
+    used in syntactic analysis *)
 
-(* Many nodes of the abstract syntax tree will hold the position of where the 
-   node came from in the original file in order to better report errors *)
+(** A position (line, character) type to be associated with lexing tokens for use in
+    error reporting *)
 type pos = int * int (* line * character *)
 
+(** The type the tree which will be the result of parsing a file *)
 (* A complete program is just a list of expressions to be sequentially evaluated *)
 type abstract_syntax_tree = AST of expr_list
-(* An expression is any of the many basic elements of a program *)
+(** An expression is any of the many basic elements of a program listed here *)
 and expr = 
     | VarExpr of var
     | DeclExpr of decl

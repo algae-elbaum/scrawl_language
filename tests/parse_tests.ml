@@ -1,4 +1,4 @@
-
+(** A test which opens a file that shouldn't generate any parsing errors and attempts to parse it *)
 let parse_ok_test () =
     Printf.printf "Parsing a file with no errors.\n";
     let file = open_in "tests/parse_test.sc" in
@@ -19,8 +19,10 @@ let parse_ok_test () =
                 false
     in try_wrap ()
 
+(** A test which opens a file that should generate parsing errors and attempts to parse it (TODO)*)
 let parse_bad_test () = true
 
+(** List of functions for the test script to use as tests *)
 let test_list = [("Parse ok test", parse_ok_test);
                  ("Parse bad test", parse_bad_test)]
 

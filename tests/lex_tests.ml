@@ -1,4 +1,4 @@
-(* Open a file that shouldn't generate any lexing errors and lex it *)
+(** A test which opens a file that shouldn't generate any lexing errors and attempts to lex it *)
 let lex_ok_test () = 
     Printf.printf "Lexing a file with no errors.\n";
     let filename = "tests/lex_test.sc" in
@@ -14,7 +14,7 @@ let lex_ok_test () =
     in try_wrap ()
 
 
-(* Open a file that should generate a lexing error and lex it *)
+(* A test which opens a file that should generate a lexing error and attempts to lex it *)
 let lex_bad_test () =
     Printf.printf "Lexing a file with errors.\n";
     let filename = "tests/lex_error_test.sc" in
@@ -28,7 +28,7 @@ let lex_bad_test () =
             true
     in try_wrap ()
 
-(* Print the result of lexing a file *)
+(** Function for use in manual testing. Prints the result of lexing a given file *)
 let lex_test filename =
     try
         List.iter (fun s -> 
@@ -43,6 +43,7 @@ let lex_test filename =
         raise (Parsing_globals.Syntax_error (line_n, tok_n))
 
 
+(** List of functions for the test script to use as tests *)
 let test_list = [("Lex ok test", lex_ok_test);
                  ("Lex bad test", lex_bad_test)]
 
