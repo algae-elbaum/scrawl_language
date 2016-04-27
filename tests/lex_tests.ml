@@ -31,7 +31,13 @@ let lex_bad_test () =
 (* Print the result of lexing a file *)
 let lex_test filename =
     try
-        List.iter (fun s -> Printf.printf "%s " (Lex.tokstr s)) (Lex.tok_lst filename)
+        List.iter (fun s -> 
+                         (Printf.printf "%s " (Lex.tokstr s));
+                         match s with 
+                           | Parser.SEMICOLON _ -> Printf.printf "\n"
+                           | _ -> Printf.printf ""
+                  )
+                  (Lex.tok_lst filename)
     with Parsing_globals.Syntax_error (line_n, tok_n) -> 
         Printf.printf "\n\nSyntax error at line %d after token %d\n" line_n tok_n;
         raise (Parsing_globals.Syntax_error (line_n, tok_n))

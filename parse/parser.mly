@@ -107,7 +107,9 @@ func_decl:
 param_list:
   | scrawl_type IDENT COMMA param_list
     {Abstract_syntax.QualIdent {ident_type=$1; ident=fst $2; pos=snd $2} :: $4}
-  | {[]}
+  | scrawl_type IDENT
+    {[Abstract_syntax.QualIdent {ident_type=$1; ident=fst $2; pos=snd $2}]}
+   | {[]}
 
 assign:
   | var ASSIGN expr {Abstract_syntax.AssignExpr {var=$1; value=$3; pos=$2}}
@@ -143,7 +145,7 @@ un_op_expr:
 un_op:
   | BNOT {Abstract_syntax.BNOT, $1}
   | LNOT {Abstract_syntax.LNOT, $1}
-  | UMINUS {Abstract_syntax.UMINUS, $1}
+  | MINUS {Abstract_syntax.UMINUS, $1}
 
 control_flow:
   | IF LPAREN expr RPAREN block 

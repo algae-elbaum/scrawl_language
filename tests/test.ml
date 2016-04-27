@@ -24,4 +24,3 @@ in
 let pass = List.fold_left (+) 0 (List.map print_and_ret tests_run) in
 
 Printf.printf "Passed %d out of %d tests\n" pass (List.length tests_run);
-
