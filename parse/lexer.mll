@@ -12,7 +12,7 @@ let character = ['A'-'z' '_']
 let flt = ((digit+ '.' digit*) | (digit* '.' digit+))
 let str_internal = ([^'"']|("\\\""))* as str
 rule tokenize = parse
-    | [' ' '\t']      { tokenize lexbuf }     (* skip blanks *)
+    | [' ' '\t' '\n']      { tokenize lexbuf }     (* skip blanks *)
 
     | digit+ as lxm                   { INT_LIT ((int_of_string lxm), pos_info lexbuf)}
     | flt as lxm                      { FLOAT_LIT ((float_of_string lxm), pos_info lexbuf) }
@@ -65,9 +65,10 @@ rule tokenize = parse
     | ';'       { SEMICOLON (pos_info lexbuf) }
     | ','       { COMMA (pos_info lexbuf) }
     | "->"      { ARROW (pos_info lexbuf) }
+    | "fun"     { FUNCSTART (pos_info lexbuf) }
     | "lambda"  { LAMBDA (pos_info lexbuf) }
     | "return"  { RETURN (pos_info lexbuf) }
-    | ['\n' ]   { EOL (pos_info lexbuf) }
+   (* | ['\n' ]   { EOL (pos_info lexbuf) } *)
     | eof       { EOF (pos_info lexbuf) }
     | _         { SYNTAX_ERROR (pos_info lexbuf) }
 

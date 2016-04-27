@@ -105,10 +105,9 @@ func_decl:
     {Abstract_syntax.FuncDecl {ret_type=$1; ident=fst $2; params=$4; pos=snd $2}}
 
 param_list:
-  | scrawl_type IDENT COMMA param_list 
-    {Abstract_syntax.QualIdent {ident_type=$1; ident=fst $2; pos=snd $2} :: $4}
-  | scrawl_type IDENT 
-    {[Abstract_syntax.QualIdent {ident_type=$1; ident=fst $2; pos=snd $2}]}
+  | LPAREN scrawl_type IDENT COMMA param_list RPAREN
+    {Abstract_syntax.QualIdent {ident_type=$2; ident=fst $3; pos=snd $3} :: $5}
+  | LPAREN RPAREN {[]}
 
 assign:
   | var ASSIGN expr {Abstract_syntax.AssignExpr {var=$1; value=$3; pos=$2}}

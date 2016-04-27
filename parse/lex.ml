@@ -6,20 +6,25 @@
 (* Get the list of tokens for a file. If there's a syntax error, raise a
    Syntax_error with the line number and how many tokens had been successfully
    read on that line *)
-let tok_lst file = 
+let tok_lst filename =
+    let file = open_in filename in
     let lexbuf = Lexing.from_channel file in
     (* Iterate through the tokens of the file, tacking them on to a list and
        keeping track of location in the file in case an error comes up *) 
     let rec next_toks () =
         match Lexer.tokenize lexbuf with
             | Parser.EOF _ -> []
-            | Parser.SYNTAX_ERROR (ln, ch) -> raise (Parsing_globals.Syntax_error (ln, ch))
+            | Parser.SYNTAX_ERROR (ln, ch) -> 
+                close_in file;
+                raise (Parsing_globals.Syntax_error (ln, ch))
             (* TODO 4 We can only see the first Syntax Error. Probably want to know
             about more than one error. How can we do that once the syntax
             starts being wrong? *)
             | n_tok -> n_tok :: (next_toks ())
     in 
-    next_toks ()
+    let res = next_toks () in
+    close_in file;
+    res
 
     
     
@@ -71,6 +76,7 @@ let tokstr = function
   | Parser.SEMICOLON _ -> "SEMICOLON"
   | Parser.COMMA _ -> "COMMA"
   | Parser.ARROW _ -> "ARROW"
+  | Parser.FUNCSTART _ -> "FUNCSTART"
   | Parser.LAMBDA _ -> "LAMBDA"
   | Parser.RETURN _ -> "RETURN"
   | Parser.EOL _ -> "EOL\n"
