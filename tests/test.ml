@@ -5,6 +5,15 @@
  *)
 let tests = Lex_tests.test_list @ Parse_tests.test_list in
 
+let run_test (name, test) = 
+    let res = (name, test ()) in
+    Printf.printf "\n";
+    res
+in
+
+(* Run the tests *)
+let tests_run = List.map run_test tests in
+
 let print_and_ret test =
     match test with
     | (name, true) -> (Printf.printf "Passed: %s\n" name; 1)
@@ -12,7 +21,7 @@ let print_and_ret test =
 in
 
 (* Count up how many tests passed and report it *)
-let pass = List.fold_left (+) 0 (List.map print_and_ret tests) in
+let pass = List.fold_left (+) 0 (List.map print_and_ret tests_run) in
 
-Printf.printf "Passed %d out of %d tests\n" pass (List.length tests);
+Printf.printf "Passed %d out of %d tests\n" pass (List.length tests_run);
 

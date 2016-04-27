@@ -5,12 +5,12 @@ let lex_ok_test () =
     let try_wrap () = 
         try
             (fun x -> ()) (Lex.tok_lst file);
-            Printf.printf "Successfully lexed\n\n";
+            Printf.printf "Successfully lexed\n";
             close_in file;
             true
         with Parsing_globals.Syntax_error (line_n, tok_n) -> 
             Printf.printf "Syntax error at line %d after token %d\n" line_n tok_n;
-            Printf.printf "Shouldn't have found an error\n\n";
+            Printf.printf "Shouldn't have found an error\n";
             close_in file;
             false
     in try_wrap ()
@@ -23,11 +23,11 @@ let lex_bad_test () =
     let try_wrap () = 
         try
             (fun x -> ()) (Lex.tok_lst file);
-            Printf.printf "Parsed to completion. Should have errored\n\n";
+            Printf.printf "Parsed to completion. Should have errored\n";
             close_in file;
             false
         with Parsing_globals.Syntax_error (line_n, tok_n) ->
-            Printf.printf "Successfully errored\n\n";
+            Printf.printf "Successfully errored\n";
             close_in file;
             true
     in try_wrap ()
@@ -41,6 +41,6 @@ let lex_test file =
         raise (Parsing_globals.Syntax_error (line_n, tok_n))
 
 
-let test_list = [("Lex ok test", lex_ok_test ());
-                 ("Lex bad test", lex_bad_test ())]
+let test_list = [("Lex ok test", lex_ok_test);
+                 ("Lex bad test", lex_bad_test)]
 
