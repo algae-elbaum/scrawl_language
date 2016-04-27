@@ -23,11 +23,13 @@ let flt = digit* frac? exp?
 let white = [' ' '\t']+
 let newline = '\r' | '\n' | "\r\n"
 let id = ['A'-'z' '_'] ['A'-'z' '0'-'9' '_']*
+let comment = "//" (_ # '\n')* '\n'
 
 let str_internal = ([^'"']|("\\\""))* as str
 rule tokenize = parse
+    | comment    { next_line lexbuf; tokenize lexbuf }
     | white      { tokenize lexbuf }     (* skip blanks *)
-    | newline   { next_line lexbuf; tokenize lexbuf }
+    | newline    { next_line lexbuf; tokenize lexbuf }
 
     | '-'? digit+ as lxm              { INT_LIT ((int_of_string lxm), pos_info lexbuf)}
     | flt as lxm                      { FLOAT_LIT ((float_of_string lxm), pos_info lexbuf) }
