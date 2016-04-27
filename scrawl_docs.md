@@ -1,14 +1,26 @@
 #Documentation
 
-I plan to start working in ernest on this doc later this week. For now I'll
-leave it at this:
+A scrawl program consists of a list of semicolon delimited expressions.
 
-Right now, Scrawl syntax is largely C-like except for array declaration
+An expression is any of:
+    a variable
+    a variable declaration
+    variable assignment
+    a lambda expression
+    a return expression
+    an int, float, string, or boolean literal
+    a function call
+    two expressions combined using a binary operator
+    an expression combined with a unary operator
+    an if expression
+    a for loop
+    a while loop
 
-An int array of length 5 named x would be declared as `int[5] x;`
 
-If we want to define or redefine a function after it's been declared, it'll 
-look like  
-`func_name = lambda (param_list) -> ... `  
-The return type will (hopefully) be inferred from the type of the expression in 
-the return statement of the function
+Variable identifiers can be made of any alphanumeric characters and underscores,
+except for the first character which may not be a number.
+Additionally they may be a variable identifier together with square bracket array indexing.
+
+eg var, var1, _var2, var3[idx], var4[idx1][idx2]
+
+
