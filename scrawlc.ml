@@ -1,10 +1,9 @@
-(* Here's the starting point of the compiler. Currently it's pretty self
-   explanatory and useless *)
+(** The main function of the compiler *)
 let () =
     if Array.length Sys.argv <> 2 then
         Printf.printf "%s" ("Usage: " ^ Sys.argv.(0) ^ " <filename>\n")
     else
-    (* Open the file, tokenize it, and leave *)
+    (* Tokenize the file and exit *)
     let filename = Sys.argv.(1) in
     let toks = Lex.tok_lst filename in
     let make_something_depend_on_the_abstract_syntax_file = Abstract_syntax.INT in
