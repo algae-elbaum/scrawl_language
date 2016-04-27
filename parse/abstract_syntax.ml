@@ -52,6 +52,7 @@ and array_var = {arr: var; idx: expr; pos: pos} (* An array along with an index 
 and simple_decl = {var_type: scrawl_type; ident: string; pos: pos}
 and arr_decl = {arr_type: scrawl_type; ident: string; pos: pos}
 and func_decl = {ret_type: scrawl_type; ident: string; params: param list; pos: pos}
+and func_start = FUNCSTART
 and bin_op = 
     | BAND | BOR | BXOR | BLEFT | BRIGHT 
     | LAND | LOR | LXNOR | LXAND | LXNAND 
