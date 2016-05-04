@@ -17,9 +17,14 @@ An expression is any of:
     a while loop
 
 
-Variable identifiers can be made of any alphanumeric characters and underscores,
-except for the first character which may not be a number.
-Additionally they may be a variable identifier together with square bracket array indexing.
+Variable identifiers can be made of underscores and any alphanumeric characters.
+However the first character may not be a number.
+Additionally a variable identifier may be a variable identifier together with square
+bracketed array indexing.
+Any variable identifier that does not index into an array is called a simple variable, and those
+that do index into arrays are called array variables. (Note that an identifier which represents an
+array may itself be a simple variable or an array variable. Array variables are those which represent
+members of arrays) 
 
 eg var, var1, _var2, var3[idx], var4[idx1][idx2]
 
