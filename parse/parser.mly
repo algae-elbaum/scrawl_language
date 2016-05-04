@@ -12,7 +12,7 @@
 %token <Abstract_syntax.pos> IF ELSE FOR WHILE LAMBDA ARROW RETURN
 %token <Abstract_syntax.pos> LPAREN RPAREN LCURLY RCURLY LSQUARE RSQUARE
 %token <Abstract_syntax.pos> SEMICOLON
-%token <Abstract_syntax.pos> EOL EOF
+%token <Abstract_syntax.pos> EOF
 %token <Abstract_syntax.pos> COMMA
 %token <Abstract_syntax.pos> FUNCSTART
 (* Not quite a token, but doing it this way leads to more functional
@@ -53,8 +53,8 @@ main:
 (* TODO 3: Possibly distinguish expressions (things that return values) and statements
            (things that might? definitely? don't). *)
 expr:
-  | var {VarExpr $1}
-  | decl {DeclExpr $1}
+  | var {Abstract_syntax.VarExpr $1}
+  | decl {Abstract_syntax.DeclExpr $1}
   | assign {$1}
   | lambda {$1}
   | RETURN expr {$2}
@@ -66,6 +66,8 @@ expr:
   | un_op_expr {$1}
   | control_flow {$1}
   | LPAREN expr RPAREN {$2}
+  (* This is only to keep the compiler from warning at us: *)
+  | SYNTAX_ERROR {raise (Parsing_globals.Syntax_error (fst $1, snd $1))}
 
 
 scrawl_type:
@@ -148,7 +150,7 @@ un_op:
 
 control_flow:
   | IF LPAREN expr RPAREN block 
-    {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr = None; pos=$1}}
+    {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr = []; pos=$1}}
   | IF LPAREN expr RPAREN block ELSE block 
     {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr=$7; pos=$1}}
   | FOR LPAREN expr SEMICOLON expr SEMICOLON expr RPAREN block
@@ -160,5 +162,5 @@ block:
   | LCURLY expr_list RCURLY {$2}
 
 expr_list:
-  | expr SEMICOLON expr_list {Abstract_syntax.ExprLst ($1, $3)}
-  |  {None}
+  | expr SEMICOLON expr_list {$1 :: $3}
+  |  {[]}

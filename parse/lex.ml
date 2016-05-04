@@ -75,7 +75,6 @@ let tokstr = function
   | Parser.FUNCSTART _ -> "FUNCSTART"
   | Parser.LAMBDA _ -> "LAMBDA"
   | Parser.RETURN _ -> "RETURN"
-  | Parser.EOL _ -> "EOL\n"
   | Parser.EOF _ -> "EOF"
   | Parser.SYNTAX_ERROR _ -> "Syntax error. An error probably should have been raised\n"
 
