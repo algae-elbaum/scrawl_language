@@ -9,7 +9,7 @@
 %token <Abstract_syntax.pos> PLUS MINUS TIMES DIV MOD POW UMINUS
 %token <Abstract_syntax.pos> ASSIGN
 %token <string * Abstract_syntax.pos> IDENT
-%token <Abstract_syntax.pos> IF ELSE FOR WHILE LAMBDA ARROW RETURN
+%token <Abstract_syntax.pos> IF ELSE FOR WHILE ARROW RETURN
 %token <Abstract_syntax.pos> LPAREN RPAREN LCURLY RCURLY LSQUARE RSQUARE
 %token <Abstract_syntax.pos> SEMICOLON
 %token <Abstract_syntax.pos> EOF
@@ -96,14 +96,14 @@ decl:
     {Abstract_syntax.SimpleDecl {var_type=$1; ident=fst $2; pos=snd $2}}
   | arr_type IDENT (* ArrDecl *)
     {Abstract_syntax.ArrDecl {arr_type=$1; ident=fst $2; pos=snd $2}}
-  | FUNCSTART func_decl {$2} 
+  | func_decl {$1} 
 
 func_decl:
-  | scrawl_type IDENT LPAREN param_list RPAREN
-    {Abstract_syntax.FuncDecl {ret_type=$1; ident=fst $2; params=$4; pos=snd $2}}
+  | FUNCSTART LPAREN param_list RPAREN IDENT
+    {Abstract_syntax.FuncDecl {ident=fst $5; params=$3; body=[]; pos=$1}}
   (* We count definition at the time of declaration as part of declaration *)
-  | scrawl_type IDENT LPAREN param_list RPAREN block
-    {Abstract_syntax.FuncDecl {ret_type=$1; ident=fst $2; params=$4; pos=snd $2}}
+  | FUNCSTART LPAREN param_list RPAREN IDENT ARROW block
+    {Abstract_syntax.FuncDecl {ident=fst $5; params=$3; body=$7; pos=$1}}
 
 param_list:
   | scrawl_type IDENT COMMA param_list
@@ -116,7 +116,7 @@ assign:
   | var ASSIGN expr {Abstract_syntax.AssignExpr {var=$1; value=$3; pos=$2}}
 
 lambda:
-  | LAMBDA LPAREN param_list RPAREN ARROW block 
+  | FUNCSTART LPAREN param_list RPAREN ARROW block 
     {Abstract_syntax.LambdaExpr {params=$3; body=$6; pos=$1}}
 
 bin_op_expr:

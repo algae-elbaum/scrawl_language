@@ -38,7 +38,7 @@ and expr =
 
     | FuncCallExpr of {func: string;
                        args: expr_list;
-                      pos: pos}
+                       pos: pos}
 
     | BinOpExpr of {op: bin_op;
                     argl: expr;
@@ -81,9 +81,9 @@ and decl =
                   ident: string;
                   pos: pos}
 
-    | FuncDecl of {ret_type: scrawl_type;
-                   ident: string;
+    | FuncDecl of {ident: string;
                    params: param list;
+                   body: expr_list;
                    pos: pos}
 
 and bin_op = 

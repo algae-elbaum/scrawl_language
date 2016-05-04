@@ -2,8 +2,6 @@
     To add more tests, create a module for your tests and place inside of it
     a test_list in the same format as in eg lex_tests.ml or parse_tests.ml. Tests
     must return a bool reporting their success or failure 
-
-   TODO 4 get a prebuild test library set up intead of this?  
  *)
 
 (** The list of tests to be run *)

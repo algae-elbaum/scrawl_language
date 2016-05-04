@@ -73,7 +73,6 @@ let tokstr = function
   | Parser.COMMA _ -> "COMMA"
   | Parser.ARROW _ -> "ARROW"
   | Parser.FUNCSTART _ -> "FUNCSTART"
-  | Parser.LAMBDA _ -> "LAMBDA"
   | Parser.RETURN _ -> "RETURN"
   | Parser.EOF _ -> "EOF"
   | Parser.SYNTAX_ERROR _ -> "Syntax error. An error probably should have been raised\n"

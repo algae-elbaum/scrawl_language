@@ -2,15 +2,15 @@ simple_var; // this is a comment
 array_var[1];
 int decl;
 int[2] arrdecl;
-fun int funcdecl ();
-fun bool funcdecl2 (string a);
-fun bool funcdecldef (string a)
+fun () funcdecl;
+fun (string a) funcdecl2;
+fun (string a) funcdecldef ->
 {
     return ret;
 };
+fun (int param) -> {};
 assign = 4;
 assign = assignval;
-lambda (int param) -> {};
 123;
 -123;
 1543.334;

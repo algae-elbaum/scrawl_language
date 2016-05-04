@@ -83,7 +83,6 @@ rule tokenize = parse
     | ','       { COMMA (pos_info lexbuf) }
     | "->"      { ARROW (pos_info lexbuf) }
     | "fun"     { FUNCSTART (pos_info lexbuf) }
-    | "lambda"  { LAMBDA (pos_info lexbuf) }
     | "return"  { RETURN (pos_info lexbuf) }
     (* id needs to have lower priority than keywords *)
     | id as ident { IDENT (ident, pos_info lexbuf) }
