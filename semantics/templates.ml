@@ -55,3 +55,54 @@ and traverse_Qual q =
 and traverse_ArgList lst =
   List.map (fun y -> traverse_Expr y) lst
 
+
+(** This is base code for transforming parts of an AST *)
+let rec replace tree = 
+  match tree with
+  | AST x -> (replace_ExprList x)
+
+and replace_ExprList lst =
+  List.map (fun y -> replace_Expr y) lst
+
+and replace_Expr xpr=
+  match xpr with
+  | VarExpr var -> replace_varExpr var
+  | DeclExpr decl -> replace_declExpr decl
+  | AssignExpr {var; value; _} -> ((replace_varExpr var); (replace_Expr value))
+  | LambdaExpr {params; body; _} -> ((replace_paramList params); (replace_ExprList body))
+  | ReturnExpr x -> (replace_Expr x)
+  | FuncCallExpr {func; args; _ } -> (replace_ArgList args)
+  | BinOpExpr {op; argl; argr; _} -> ((replace_Expr argl);  (replace_Expr argr))
+  | UnOpExpr {op; arg; _ } -> (replace_Expr arg) 
+  | IfExpr {cond; body;  else_expr; _ } -> ((replace_Expr cond); (replace_ExprList body); (replace_ExprList else_expr))
+  | ForExpr {iter_var; cond; iter; body; _ } 
+        -> ((replace_Expr iter_var); (replace_Expr cond); (replace_Expr iter); (replace_ExprList body))
+  | WhileExpr {cond; body; _} -> ((replace_Expr cond); (replace_ExprList body))
+  | _ -> ()
+
+and replace_varExpr v =
+  match v with
+  | SimpleVar _ -> v
+  | ArrayVar {arr; idx; pos} -> ArrayVar {(replace_varExpr arr); (replace_Expr idx); pos}
+
+and replace_declExpr d =
+  match d with
+  | SimpleDecl {var_type; ident; pos} -> SimpleDecl {(replace_ScrawlType var_type); ident; pos}
+  | ArrDecl {arr_type; ident; pos} ->  ArrDecl {(replace_ScrawlType arr_type); ident; pos}
+  | FuncDecl {ident; params; body; pos} -> FuncDecl {ident; (replace_paramList params); (replace_ExprList body); pos}
+
+and replace_ScrawlType q =
+  match q with
+  | ScrawlArrayType {array_type; len; pos} -> ScrawlArrayType {(replace_ScrawlType array_type); len; pos}
+  | _ -> ()
+
+and replace_paramList p =
+  List.map (fun y -> replace_Qual y) p
+
+and replace_Qual q =
+  match q with
+  | QualIdent {ident_type; ident; pos} -> QualIdent {(replace_ScrawlType ident_type); ident; pos}
+
+and replace_ArgList lst =
+  List.map (fun y -> replace_Expr y) lst
+

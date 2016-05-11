@@ -2,7 +2,11 @@
     and types *)
     
 (* Not clear yet whether this should be one function or two *)
-(* TODO 0: Complete this function *)
+(* TODO 1: Complete this function *)
+(* TODO 0: I think we should first run through some AST simplifications
+           (eg turn all for loops into while loops, separating simultaneous
+           declarations and initializations). It'll make this and subsequent
+           processing easier, and it doesn't depend on type or scope correctness *)
 let rec check_type_and_scope tree =
   (* We'll maintain a mutating environment and pass it around by reference to
      avoid the cost of copying the hash table all the time. A deletion stack
