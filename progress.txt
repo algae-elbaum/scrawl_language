@@ -1,7 +1,12 @@
+5.10.16
+
 Kleps: I wrote the pretty printer. This found a couple
 of parsing bugs, like function calling being dead
 and something wrong with parsing returns as well.
 Removed the color change code for tests. 
 Fixed the test code so that it followed the new file endings
 for .spl files.
-5.10.16
+
+Algae: Wrote AST equality comparison, used it to finish the parse structure 
+test. Added semantics directory which currently holds the beginnings of scope
+and type checking.
