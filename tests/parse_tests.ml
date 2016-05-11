@@ -4,17 +4,12 @@ open Abstract_syntax
     the expected AST. Positions are not tested *)
 let parse_structure_test () = 
     Printf.printf "Parsing a file with no errors and checking its AST\n";
-(*     Printf.printf "Failed. Will fail until pretty printing works\n";
-     false*)
-   let file = open_in "tests/parse_good_structure.spl" in
-(* Print out lexing so that we can compare lexed to parsed for checking *)
-   (* let _ = Lex_tests.lex_test "tests/parse_good_structure.spl" in *)
-
+    let file = open_in "tests/parse_good_structure.spl" in
     let try_wrap () =
         let lexbuf = Lexing.from_channel file in
         try
             let result = Parser.main Lexer.tokenize lexbuf in
-            Printf.printf "Successfully parsed\n";
+            Printf.printf "Parsing completed\n";
             close_in file;
             result
         with
@@ -27,15 +22,16 @@ let parse_structure_test () =
                 AST []
     in
     let ast = try_wrap () in
-      let st = Abstract_syntax.prettyPrint_Tree ast in
-      begin
-        Printf.printf "%s" st;
-        false
-      end
-(*     let correct_ast =
+    let correct_ast =
         AST [DeclExpr (SimpleDecl {var_type = INT;
                                    ident = "i";
                                    pos = (0,0)});
+             AssignExpr {var = SimpleVar {ident = "i";
+                                          pos = (0,0)};
+                         value = IntLitExpr {value = 5;
+                                             pos = (0,0)}; 
+                         pos = (0,0)};
+
              ForExpr {iter_var = AssignExpr {var = SimpleVar {ident = "i";
                                                               pos = (0,0)};
                                              value = IntLitExpr {value = 0;
@@ -82,6 +78,16 @@ let parse_structure_test () =
                                                                            pos = (0,0)})];
                                                        pos = (0,0)};
                                     pos =(0,0)};
+
+                        ReturnExpr (FuncCallExpr {func = "q";
+                                                  args = [VarExpr (SimpleVar 
+                                                                    {ident = "i";
+                                                                     pos = (0,0)});
+                                                          VarExpr (SimpleVar
+                                                                    {ident = "j";
+                                                                     pos = (0,0)})];
+                                                  pos = (0,0)});
+
                         ReturnExpr (FuncCallExpr {func = "hiphip";
                                                   args = [VarExpr (SimpleVar 
                                                                     {ident = "i";
@@ -92,8 +98,12 @@ let parse_structure_test () =
                       ];
                       pos = (0,0)}
         ] in
-    false
-    pretty_print ast == pretty_print correct_ast *)
+    if Abstract_syntax.comp_AST ast correct_ast
+        then (Printf.printf "Parsed into correct AST\n"; true)
+        else (Printf.printf "Parsed into incorrect AST\n"; 
+              Printf.printf "result was:\n%s\n\n" (Abstract_syntax.prettyPrint_Tree ast);
+              Printf.printf "correct is:\n%s\n\n" (Abstract_syntax.prettyPrint_Tree correct_ast);
+              false)
 
 (** A test which opens a file that shouldn't generate any parsing errors and
     attempts to parse it *)

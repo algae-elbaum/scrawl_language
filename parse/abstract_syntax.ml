@@ -105,6 +105,110 @@ and param = QualIdent of {ident_type: scrawl_type;
                           ident: string;
                           pos: pos}
 
+
+
+(** This gives a function to compare two ASTs *)
+let rec comp_AST ast1 ast2 = 
+  match ast1, ast2 with
+  | AST x1, AST x2 -> comp_ExprList x1 x2
+
+and comp_varExpr v1 v2 =
+  match v1, v2 with
+  | SimpleVar {ident = i1; _}, SimpleVar {ident = i2; _} -> i1 = i2
+  | ArrayVar {arr = a1; idx = i1; _}, ArrayVar {arr = a2; idx = i2; _} -> (comp_varExpr a1 a2) && (comp_Expr i1 i2) 
+  | _, _ -> false
+
+and comp_ScrawlType q1 q2 =
+  match q1, q2 with
+  | INT, INT
+  | FLOAT, FLOAT
+  | BOOL, BOOL
+  | STRING, STRING -> true
+  | ScrawlArrayType {array_type = a1; len = l1; _}, ScrawlArrayType {array_type = a2; len = l2; _} -> (comp_ScrawlType a1 a2) && (l1 = l2)
+  | _ -> false
+
+and comp_Qual q1 q2 =
+  match q1, q2 with
+  | QualIdent {ident_type = it1; ident = i1;_}, QualIdent {ident_type = it2; ident = i2; _} -> (comp_ScrawlType it1 it2) && i1 = i2
+
+and comp_paramList p1 p2 =
+  match p1, p2 with
+  | (ys1::yss1), (ys2::yss2) -> (comp_Qual ys1 ys2) && (comp_paramList yss1 yss2)
+  | [], [] -> true
+  | _, _ -> false
+
+and comp_declExpr d1 d2 =
+  match d1, d2 with
+  | SimpleDecl {var_type = v1; ident = i1; _}, SimpleDecl {var_type = v2; ident = i2; _} -> (comp_ScrawlType v1 v2) && i1 = i2
+  | ArrDecl {arr_type = a1; ident = i1; _}, ArrDecl {arr_type = a2; ident = i2; _} ->  (comp_ScrawlType a1 a2) && i1 = i2
+  | FuncDecl {ident = i1; params = p1; body = b1; _}, FuncDecl {ident = i2; params = p2; body = b2; _} -> i1 = i2 && (comp_paramList p1 p2) && (comp_ExprList b1 b2)
+  | _, _ -> false
+
+
+and comp_BinOpExpr xpr1 xpr2 =
+  match xpr1, xpr2 with
+  | BAND, BAND
+  | BOR, BOR
+  | BXOR, BXOR
+  | BLEFT, BLEFT
+  | BRIGHT, BRIGHT
+  | LAND, LAND
+  | LOR, LOR
+  | LXNOR, LXNOR
+  | LXAND, LXAND
+  | LXNAND, LXNAND
+  | EQ, EQ
+  | LESS, LESS
+  | GREATER, GREATER
+  | PLUS, PLUS
+  | MINUS, MINUS
+  | TIMES, TIMES
+  | DIV, DIV
+  | MOD, MOD
+  | POW, POW -> true
+  | _, _ -> false
+
+and comp_UnOpExpr xpr1 xpr2 =
+  match xpr1, xpr2 with
+  | BNOT, BNOT
+  | LNOT, LNOT
+  | UMINUS, UMINUS -> true
+  | _, _ -> false
+
+and comp_Expr xpr1 xpr2 =
+  match xpr1, xpr2 with
+  | VarExpr var1, VarExpr var2 -> comp_varExpr var1 var2
+  | DeclExpr decl1, DeclExpr decl2 -> comp_declExpr decl1 decl2
+  | AssignExpr {var = vr1; value = vl1; _}, AssignExpr {var = vr2; value = vl2; _} -> (comp_varExpr vr1 vr2) && (comp_Expr vl1 vl2)
+  | LambdaExpr {params = p1; body = b1; _}, LambdaExpr {params = p2; body = b2; _} -> (comp_paramList p1 p2) && (comp_ExprList b1 b2)
+  | ReturnExpr x1, ReturnExpr x2 -> comp_Expr x1 x2
+  | IntLitExpr {value = v1; _}, IntLitExpr {value = v2; _} -> v1 = v2
+  | FloatLitExpr {value = v1; _}, FloatLitExpr {value = v2; _} -> v1 = v2
+  | StringLitExpr {value = v1; _}, StringLitExpr {value = v2; _} -> v1 = v2
+  | BoolLitExpr {value = v1; _}, BoolLitExpr {value = v2; _} -> v1 = v2
+  | FuncCallExpr {func = f1; args = a1; _ }, FuncCallExpr {func = f2; args = a2; _ } -> f1 = f2 && (comp_ArgList a1 a2)
+  | BinOpExpr {op = o1; argl = al1; argr = ar1; _}, BinOpExpr {op = o2; argl = al2; argr = ar2; _} -> (comp_Expr al1 al2) && (comp_BinOpExpr o1 o2) && (comp_Expr ar1 ar2)
+  | UnOpExpr {op = o1; arg = a1; _ }, UnOpExpr {op = o2; arg = a2; _ } -> (comp_UnOpExpr o1 o2) && (comp_Expr a1 a2)
+  | IfExpr {cond = c1; body = b1;  else_expr = e1; _ }, IfExpr {cond = c2; body = b2;  else_expr = e2; _ }-> (comp_Expr c1 c2) && (comp_ExprList b1 b2) && (comp_ExprList e1 e2)
+  | ForExpr {iter_var = iv1; cond = c1; iter = i1; body = b1; _ }, ForExpr {iter_var = iv2; cond = c2; iter = i2; body = b2; _ }
+        -> (comp_Expr iv1 iv2) && (comp_Expr c1 c2) && (comp_Expr i1 i2) && (comp_ExprList b1 b2)
+  | WhileExpr {cond = c1; body = b1; _}, WhileExpr {cond = c2; body = b2; _}-> (comp_Expr c1 c2) && (comp_ExprList b1 b2)
+  | _, _ -> false
+
+and comp_ExprList lst1 lst2 =
+  match lst1, lst2 with
+  | (x1::xs1), (x2::xs2)-> (comp_Expr x1 x2) && (comp_ExprList xs1 xs2)
+  | [], [] -> true
+  | _, _ -> false
+
+and comp_ArgList lst1 lst2 =
+  match lst1, lst2 with
+  | (x1::xs1), (x2::xs2) -> (comp_Expr x1 x2) && (comp_ArgList xs1 xs2)
+  | [], [] -> true
+  | _, _ -> false 
+
+
+
 (* Comented out match statements are the error checking
 They ar ereomved because they generate warnings. However,
 this means that we know that the pretty printer will 
