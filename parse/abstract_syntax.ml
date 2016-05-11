@@ -248,7 +248,7 @@ and prettyPrint_declExpr d =
   match d with
   | SimpleDecl {var_type; ident; _} -> (prettyPrint_ScrawlType var_type) ^ ident
   | ArrDecl {arr_type; ident; _} ->  (prettyPrint_ScrawlType arr_type) ^ ident
-  | FuncDecl {ident; params; body; _} -> ident ^ " " ^ (prettyPrint_paramList params) ^ "{" ^ (prettyPrint_ExprList body) ^ "}"
+  | FuncDecl {ident; params; body; _} -> ident ^ "(" ^ (prettyPrint_paramList params) ^ "}\n{\n" ^ (prettyPrint_ExprList body) ^ "}"
   (* | _ -> "Fail DeclExpr" *)
 
 
@@ -287,7 +287,7 @@ and prettyPrint_Expr xpr=
   | VarExpr var -> prettyPrint_varExpr var
   | DeclExpr decl -> prettyPrint_declExpr decl
   | AssignExpr {var; value; _} -> (prettyPrint_varExpr var) ^ "=" ^ (prettyPrint_Expr value)
-  | LambdaExpr {params; body; _} -> "lambda " ^ (prettyPrint_paramList params) ^ "{" ^(prettyPrint_ExprList body) ^ "}"
+  | LambdaExpr {params; body; _} -> "lambda (" ^ (prettyPrint_paramList params) ^ ")\n{\n" ^(prettyPrint_ExprList body) ^ "}"
   | ReturnExpr x -> "Return " ^ (prettyPrint_Expr x)
   | IntLitExpr {value; _} -> (string_of_int value)
   | FloatLitExpr {value; _} -> (string_of_float value)
@@ -297,7 +297,8 @@ and prettyPrint_Expr xpr=
   | BinOpExpr {op; argl; argr; _} -> (prettyPrint_Expr argl) ^ " " ^(prettyPrint_BinOpExpr op) ^ " " ^(prettyPrint_Expr argr)
   | UnOpExpr {op; arg; _ } -> "(" ^ (prettyPrint_UnOpExpr op) ^ (prettyPrint_Expr arg) ^ ")"
   | IfExpr {cond; body;  else_expr; _ } -> "IF " ^ (prettyPrint_Expr cond) ^ "{" ^(prettyPrint_ExprList body) ^"} ELSE {" ^ (prettyPrint_ExprList else_expr) ^ "}"
-  | ForExpr {iter_var; cond; iter; body; _ } -> "FOR " ^ (prettyPrint_Expr iter_var) ^ "; " ^ (prettyPrint_Expr cond) ^ "; " ^ (prettyPrint_Expr iter) ^ "{" ^ (prettyPrint_ExprList body) ^ "}"
+  | ForExpr {iter_var; cond; iter; body; _ }
+        -> "FOR (" ^ (prettyPrint_Expr iter_var) ^ "; " ^ (prettyPrint_Expr cond) ^ "; " ^ (prettyPrint_Expr iter) ^ ")\n{\n" ^ (prettyPrint_ExprList body) ^ "}"
   | WhileExpr {cond; body; _} -> "WHILE " ^ (prettyPrint_Expr cond) ^ "{" ^ (prettyPrint_ExprList body) ^ "}"
   (* | _ -> "Fail expr" *)
 
