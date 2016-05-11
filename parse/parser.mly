@@ -57,7 +57,8 @@ expr:
   | decl {Abstract_syntax.DeclExpr $1}
   | assign {$1}
   | lambda {$1}
-  | RETURN expr {$2}
+  | IDENT LPAREN arg_list RPAREN {Abstract_syntax.FuncCallExpr {func= fst $1; args=$3; pos=snd $1}}
+  | RETURN expr {Abstract_syntax.ReturnExpr $2}
   | INT_LIT {Abstract_syntax.IntLitExpr {value=fst $1; pos=snd $1}}
   | FLOAT_LIT {Abstract_syntax.FloatLitExpr {value=fst $1; pos=snd $1}}
   | STRING_LIT {Abstract_syntax.StringLitExpr {value=fst $1; pos=snd $1}}
@@ -105,6 +106,7 @@ func_decl:
   | FUNCSTART LPAREN param_list RPAREN IDENT ARROW block
     {Abstract_syntax.FuncDecl {ident=fst $5; params=$3; body=$7; pos=$1}}
 
+(* This is for declaring functions *)
 param_list:
   | scrawl_type IDENT COMMA param_list
     {Abstract_syntax.QualIdent {ident_type=$1; ident=fst $2; pos=snd $2} :: $4}
@@ -163,4 +165,10 @@ block:
 
 expr_list:
   | expr SEMICOLON expr_list {$1 :: $3}
+  |  {[]}
+
+(* This is for calling functions*)
+arg_list:
+  | expr COMMA arg_list {$1 :: $3}
+  | expr {[$1]}
   |  {[]}

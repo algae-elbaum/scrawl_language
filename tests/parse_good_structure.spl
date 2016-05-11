@@ -1,12 +1,15 @@
 int i;
+i = 5;
 for (i = 0; i < 10; i = i + 1)
 {
     fun (int param1, string param2) func;
     func = fun (int param1, string param2) ->
     {
         return 5;
-    }
-    return hiphip(i, "12");
+    };
+    return q(i, j);
+    // Note that we can add an extra comma
+    return hiphip(i, "12",);
 };
-
+// Note that comments work.
 // TODO: add more stuff

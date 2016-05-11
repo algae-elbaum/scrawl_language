@@ -4,9 +4,12 @@ open Abstract_syntax
     the expected AST. Positions are not tested *)
 let parse_structure_test () = 
     Printf.printf "Parsing a file with no errors and checking its AST\n";
-    Printf.printf "Failed. Will fail until pretty printing works\n";
-    false
-(*    let file = open_in "tests/parse_good_structure.sl" in
+(*     Printf.printf "Failed. Will fail until pretty printing works\n";
+     false*)
+   let file = open_in "tests/parse_good_structure.spl" in
+(* Print out lexing so that we can compare lexed to parsed for checking *)
+   (* let _ = Lex_tests.lex_test "tests/parse_good_structure.spl" in *)
+
     let try_wrap () =
         let lexbuf = Lexing.from_channel file in
         try
@@ -24,7 +27,12 @@ let parse_structure_test () =
                 AST []
     in
     let ast = try_wrap () in
-    let correct_ast =
+      let st = Abstract_syntax.prettyPrint_Tree ast in
+      begin
+        Printf.printf "%s" st;
+        false
+      end
+(*     let correct_ast =
         AST [DeclExpr (SimpleDecl {var_type = INT;
                                    ident = "i";
                                    pos = (0,0)});
@@ -90,7 +98,7 @@ let parse_structure_test () =
 (** A test which opens a file that shouldn't generate any parsing errors and
     attempts to parse it *)
 let parse_ok_test () =
-    let filename =  "tests/parse_good.sl" in
+    let filename =  "tests/parse_good.spl" in
     Printf.printf "Parsing a file with no errors. (%s)\n" filename;
     let file = open_in filename in
     let try_wrap () =
@@ -114,11 +122,11 @@ let parse_ok_test () =
     parse them *)
 let parse_bad_test () =
     Printf.printf "Parsing files with errors.\n";
-    let error_files = ["tests/parse_bad_1.sl";
-                       "tests/parse_bad_2.sl";
-                       "tests/parse_bad_3.sl";
-                       "tests/parse_bad_4.sl";
-                       "tests/parse_bad_5.sl";] in
+    let error_files = ["tests/parse_bad_1.spl";
+                       "tests/parse_bad_2.spl";
+                       "tests/parse_bad_3.spl";
+                       "tests/parse_bad_4.spl";
+                       "tests/parse_bad_5.spl";] in
     let error_parse f =
         let file = open_in f in
         let try_wrap () =

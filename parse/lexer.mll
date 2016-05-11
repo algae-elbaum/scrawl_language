@@ -58,8 +58,8 @@ rule tokenize = parse
     | "not"     { LNOT (pos_info lexbuf) }
     | "=="      { EQ (pos_info lexbuf) }
     | "is"      { EQ (pos_info lexbuf) }
-    | '<'       { GREATER (pos_info lexbuf) }
-    | '>'       { LESS (pos_info lexbuf) }
+    | '>'       { GREATER (pos_info lexbuf) }
+    | '<'       { LESS (pos_info lexbuf) }
     | '+'       { PLUS (pos_info lexbuf) }
     | '-'       { MINUS (pos_info lexbuf) }
     | '*'       { TIMES (pos_info lexbuf) }

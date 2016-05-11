@@ -10,7 +10,7 @@ Dependencies:
   - ocamlbuild
   - menhir
 
-Use the file extension .sc for Scrawl programs
+Use the file extension .spl for Scrawl programs
 
 
 Since this project is long term, there are going to be TODOs that should be

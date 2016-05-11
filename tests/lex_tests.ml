@@ -1,6 +1,6 @@
 (** A test which opens a file that shouldn't generate any lexing errors and attempts to lex it *)
 let lex_ok_test () = 
-    let filename = "tests/lex_test.sl" in
+    let filename = "tests/lex_test.spl" in
     Printf.printf "Lexing a file with no errors. (%s)\n" filename;
     let try_wrap () = 
         try
@@ -16,7 +16,7 @@ let lex_ok_test () =
 
 (* A test which opens a file that should generate a lexing error and attempts to lex it *)
 let lex_bad_test () =
-    let filename = "tests/lex_error_test.sl" in
+    let filename = "tests/lex_error_test.spl" in
     Printf.printf "Lexing a file with errors. (%s)\n" filename;
     let try_wrap () = 
         try
