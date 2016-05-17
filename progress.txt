@@ -10,3 +10,9 @@ for .spl files.
 Algae: Wrote AST equality comparison, used it to finish the parse structure 
 test. Added semantics directory which currently holds the beginnings of
 scope/type checking and AST transformation (eg for->while)
+
+5.16.16
+
+Algae:
+Finished scope/type checking (probably broken, haven't tested manually yet,
+much less written tests for the suite).

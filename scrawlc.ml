@@ -23,7 +23,14 @@ let () =
                 Abstract_syntax.AST []
     in
     let ast = try_wrap () in
-
+    let simpler_ast = Simplifications.simplify ast in
+    let type_and_scope_errs = Type_and_scope_checking.chk_type_and_scope simpler_ast in
+    if type_and_scope_errs <> [] then
+        begin
+        (fun _ -> ()) (List.map (fun s -> Printf.printf "Error: %s\n" s) 
+                                type_and_scope_errs);
+        exit 1
+        end;
     Printf.printf "Here's the pretty printed result of parsing the given file:\n";
     Printf.printf "%s\n\n" (Abstract_syntax.prettyPrint_Tree ast);
 

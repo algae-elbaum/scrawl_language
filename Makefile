@@ -1,11 +1,11 @@
 all: scrawlc test
 
 scrawlc: parse/* scrawlc.ml
-	@ocamlbuild -use-menhir -I parse scrawlc.native
+	@ocamlbuild -use-menhir -Is parse,semantics scrawlc.native
 	@mv scrawlc.native scrawlc
 
 test: parse/* tests/*
-	@ocamlbuild -use-menhir -Is parse,tests test.native
+	@ocamlbuild -use-menhir -Is parse,semantics,tests test.native
 	@mv test.native test
 
 clean:

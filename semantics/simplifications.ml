@@ -1,41 +1,81 @@
+open Abstract_syntax
 
 (** Translate for loops into while loops *)
 
-let rec for_to_while tree = 
-  match tree with
-  | AST x -> (for_to_while_ExprList x)
+let rec simplify tree = 
+    match tree with
+    | AST x -> AST (simplify_ExprList x)
 
-and for_to_while_ExprList lst =
-  List.map (fun y -> for_to_while_Expr y) lst
+and simplify_ExprList lst =
+    List.map (fun y -> simplify_Expr y) lst
 
-and for_to_while_Expr xpr=
-  match xpr with
-  | VarExpr var -> for_to_while_varExpr var
-  | DeclExpr decl -> for_to_while_declExpr decl
-  | AssignExpr {var; value; _} -> ((for_to_while_varExpr var); (for_to_while_Expr value))
-  | LambdaExpr {params; body; _} -> ((for_to_while_paramList params); (for_to_while_ExprList body))
-  | ReturnExpr x -> (for_to_while_Expr x)
-  | FuncCallExpr {func; args; _ } -> (for_to_while_ArgList args)
-  | BinOpExpr {op; argl; argr; _} -> ((for_to_while_Expr argl);  (for_to_while_Expr argr))
-  | UnOpExpr {op; arg; _ } -> (for_to_while_Expr arg) 
-  | IfExpr {cond; body;  else_expr; _ } -> ((for_to_while_Expr cond); (for_to_while_ExprList body); (for_to_while_ExprList else_expr))
-  (** TODO this is where to change the for into a while  *)
-  | ForExpr {iter_var; cond; iter; body; _ } 
-        -> ((for_to_while_Expr iter_var); (for_to_while_Expr cond); (for_to_while_Expr iter); (for_to_while_ExprList body))
-  | WhileExpr {cond; body; _} -> ((for_to_while_Expr cond); (for_to_while_ExprList body))
-  | _ -> ()
+and simplify_Expr xpr=
+    match xpr with
+    | VarExpr var -> VarExpr (simplify_varExpr var)
+    | DeclExpr decl -> DeclExpr (simplify_declExpr decl)
+    | AssignExpr {var; value; pos} ->
+        AssignExpr {var = (simplify_varExpr var);
+                    value = (simplify_Expr value);
+                    pos}
+    | LambdaExpr {func_type; params; body; pos} ->
+        LambdaExpr {func_type;
+                    params;
+                    body = (simplify_ExprList body);
+                    pos}
+    | ReturnExpr x -> ReturnExpr (simplify_Expr x)
+    | FuncCallExpr {func; args; pos} ->
+        FuncCallExpr {func;
+                      args = (simplify_ArgList args);
+                      pos}
+    | BinOpExpr {op; argl; argr; pos} ->
+        BinOpExpr {op;
+                   argl = (simplify_Expr argl);
+                   argr = (simplify_Expr argr);
+                   pos}
+    | UnOpExpr {op; arg; pos} -> 
+        UnOpExpr {op;
+                  arg = (simplify_Expr arg);
+                  pos}
+    | IfExpr {cond; body; else_expr; pos} ->
+        IfExpr {cond = (simplify_Expr cond);
+                body = (simplify_ExprList body);
+                else_expr = (simplify_ExprList else_expr);
+                pos}
+    (** TODO this is where to change the for into a while  *)
+    | ForExpr {iter_var; cond; iter; body; pos} ->
+        ForExpr {iter_var = (simplify_Expr iter_var);
+                 cond = (simplify_Expr cond);
+                 iter = (simplify_Expr iter);
+                 body =(simplify_ExprList body);
+                 pos}
+    | WhileExpr {cond; body; pos} ->
+        WhileExpr {cond = (simplify_Expr cond);
+                   body = (simplify_ExprList body);
+                   pos}
+    | IntLitExpr _
+    | FloatLitExpr _
+    | StringLitExpr _
+    | BoolLitExpr _ -> xpr
 
-and for_to_while_varExpr v =
-  match v with
-  | SimpleVar _ -> v
-  | ArrayVar {arr; idx; pos} -> ArrayVar {(for_to_while_varExpr arr); (for_to_while_Expr idx); pos}
+and simplify_varExpr v =
+    match v with
+    | SimpleVar _ -> v
+    | ArrayVar {arr; idx; pos} ->
+        ArrayVar {arr = (simplify_varExpr arr);
+                  idx = (simplify_Expr idx);
+                  pos}
 
-and for_to_while_declExpr d =
-  match d with
-  | SimpleDecl {var_type; ident; pos} -> d
-  | ArrDecl {arr_type; ident; pos} -> d
-  | FuncDecl {ident; params; body; pos} -> FuncDecl {ident; params; (for_to_while_ExprList body); pos}
+and simplify_declExpr d =
+    match d with
+    | SimpleDecl {var_type; ident; pos} -> d
+    | ArrDecl {arr_type; ident; pos} -> d
+    | FuncDecl {func_type; ident; params; body; pos} ->
+        FuncDecl {func_type;
+                  ident;
+                  params;
+                  body = (simplify_ExprList body);
+                  pos}
 
-and for_to_while_ArgList lst =
-  List.map (fun y -> for_to_while_Expr y) lst
+and simplify_ArgList lst =
+    List.map (fun y -> simplify_Expr y) lst
 

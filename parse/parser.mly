@@ -1,3 +1,9 @@
+%{
+    let types_of_params params =
+       List.map (fun (Abstract_syntax.QualIdent {ident_type; ident; _}) -> ident_type) params 
+%}
+
+
 (* Declare tokens *)
 %token <int * Abstract_syntax.pos> INT_LIT
 %token <float * Abstract_syntax.pos> FLOAT_LIT
@@ -57,7 +63,8 @@ expr:
   | decl {Abstract_syntax.DeclExpr $1}
   | assign {$1}
   | lambda {$1}
-  | IDENT LPAREN arg_list RPAREN {Abstract_syntax.FuncCallExpr {func= fst $1; args=$3; pos=snd $1}}
+  | IDENT LPAREN arg_list RPAREN {Abstract_syntax.FuncCallExpr 
+      {func= fst $1; args=$3; pos=snd $1}}
   | RETURN expr {Abstract_syntax.ReturnExpr $2}
   | INT_LIT {Abstract_syntax.IntLitExpr {value=fst $1; pos=snd $1}}
   | FLOAT_LIT {Abstract_syntax.FloatLitExpr {value=fst $1; pos=snd $1}}
@@ -101,10 +108,16 @@ decl:
 
 func_decl:
   | FUNCSTART LPAREN param_list RPAREN IDENT
-    {Abstract_syntax.FuncDecl {ident=fst $5; params=$3; body=[]; pos=$1}}
+    {Abstract_syntax.FuncDecl {func_type=Abstract_syntax.ScrawlFuncType 
+                                            {param_types=types_of_params $3;
+                                             ret_type=Abstract_syntax.NONE}; 
+                               ident=fst $5; params=$3; body=[]; pos=$1}}
   (* We count definition at the time of declaration as part of declaration *)
   | FUNCSTART LPAREN param_list RPAREN IDENT ARROW block
-    {Abstract_syntax.FuncDecl {ident=fst $5; params=$3; body=$7; pos=$1}}
+    {Abstract_syntax.FuncDecl {func_type=Abstract_syntax.ScrawlFuncType
+                                            {param_types=types_of_params $3;
+                                             ret_type=Abstract_syntax.NONE}; 
+                               ident=fst $5; params=$3; body=$7; pos=$1}}
 
 (* This is for declaring functions *)
 param_list:
@@ -119,7 +132,10 @@ assign:
 
 lambda:
   | FUNCSTART LPAREN param_list RPAREN ARROW block 
-    {Abstract_syntax.LambdaExpr {params=$3; body=$6; pos=$1}}
+    {Abstract_syntax.LambdaExpr {func_type=Abstract_syntax.ScrawlFuncType
+                                            {param_types=types_of_params $3;
+                                            ret_type=Abstract_syntax.NONE};
+                                 params=$3; body=$6; pos=$1}}
 
 bin_op_expr:
   | expr bin_op expr {Abstract_syntax.BinOpExpr {op=fst $2; argl=$1; argr=$3; pos=snd $2}}

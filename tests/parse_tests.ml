@@ -54,7 +54,11 @@ let parse_structure_test () =
                                                             pos = (0,0)}; 
                                          pos = (0,0)};
                       body = [
-                        DeclExpr (FuncDecl {ident = "func";
+                        DeclExpr (FuncDecl {func_type = 
+                                                ScrawlFuncType {param_types =
+                                                                    [INT; STRING];
+                                                                ret_type = NONE};
+                                            ident = "func";
                                             params=
                                                 [QualIdent {ident_type = INT;
                                                             ident = "param1";
@@ -66,17 +70,22 @@ let parse_structure_test () =
                                             pos = (0,0)});
                         AssignExpr {var = SimpleVar {ident = "func";
                                                      pos = (0,0)};
-                                    value = LambdaExpr {params =  
+                                    value = LambdaExpr {
+                                                   func_type = 
+                                                        ScrawlFuncType {param_types =
+                                                                            [INT; STRING];
+                                                                        ret_type = NONE};
+                                                   params =  
                                                        [QualIdent {ident_type = INT;
                                                                    ident = "param1";
                                                                    pos = (0,0)};
                                                        QualIdent {ident_type = STRING;
                                                                   ident = "param2";
                                                                   pos = (0,0)}];
-                                                       body = [ReturnExpr 
-                                                                (IntLitExpr {value = 5;
-                                                                           pos = (0,0)})];
-                                                       pos = (0,0)};
+                                                   body = [ReturnExpr 
+                                                            (IntLitExpr {value = 5;
+                                                                       pos = (0,0)})];
+                                                   pos = (0,0)};
                                     pos =(0,0)};
 
                         ReturnExpr (FuncCallExpr {func = "q";
