@@ -41,17 +41,20 @@ and simplify_Expr xpr=
                 body = (simplify_ExprList body);
                 else_expr = (simplify_ExprList else_expr);
                 pos}
-    (** TODO this is where to change the for into a while  *)
+    (** Change the for into a while  *)
+    (* The preface is for putting code before the loop starts just so
+    we can get for loops into while loops here. *)
     | ForExpr {iter_var; cond; iter; body; pos} ->
-        ForExpr {iter_var = (simplify_Expr iter_var);
-                 cond = (simplify_Expr cond);
-                 iter = (simplify_Expr iter);
-                 body =(simplify_ExprList body);
+        WhileExpr {cond = (simplify_Expr cond);
+                 body =(simplify_ExprList (body @ [(simplify_Expr iter)]));
+                 preface = (simplify_Expr iter_var);
                  pos}
-    | WhileExpr {cond; body; pos} ->
+    | WhileExpr {cond; body; preface; pos} ->
         WhileExpr {cond = (simplify_Expr cond);
                    body = (simplify_ExprList body);
+                   preface = (simplify_Expr preface);
                    pos}
+    | NoOp _
     | IntLitExpr _
     | FloatLitExpr _
     | StringLitExpr _

@@ -44,7 +44,7 @@ and traverse_Expr xpr=
         (traverse_Expr iter);
         (traverse_ExprList body);
         end
-    | WhileExpr {cond; body; _} -> 
+    | WhileExpr {cond; body; preface; _} -> 
         begin
         (traverse_Expr cond);
         (traverse_ExprList body);

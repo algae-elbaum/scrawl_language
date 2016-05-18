@@ -44,6 +44,7 @@ and chk_ExprList lst env del errs =
 
 and chk_Expr xpr env del errs =
     match xpr with
+    | NoOp {pos}-> NONE
     | VarExpr var -> chk_varExpr var env del errs
     | DeclExpr decl -> chk_declExpr decl env del errs
     | AssignExpr {var; value; pos} -> 
@@ -166,8 +167,9 @@ and chk_Expr xpr env del errs =
         end
     | ForExpr _  -> 
         raise (Invalid_argument "Type/scope checker got AST with for loop (compiler bug)")
-    | WhileExpr {cond; body; _} ->
+    | WhileExpr {cond; body; preface;_} ->
         begin
+        (fun _ -> ()) (chk_Expr preface env del errs);
         (fun _ -> ()) (chk_Expr cond env del errs);
         Stack.push "*" !del; (* Start a new scope *)
         (fun _ -> ()) (chk_ExprList body env del errs);

@@ -174,7 +174,7 @@ control_flow:
   | FOR LPAREN expr SEMICOLON expr SEMICOLON expr RPAREN block
     {Abstract_syntax.ForExpr {iter_var=$3; cond=$5; iter=$7; body=$9; pos=$1}}
   | WHILE LPAREN expr RPAREN block 
-    {Abstract_syntax.WhileExpr {cond=$3; body=$5; pos=$1}}
+    {Abstract_syntax.WhileExpr {cond=$3; body=$5; preface = Abstract_syntax.NoOp {pos = $1}; pos=$1}}
 
 block:
   | LCURLY expr_list RCURLY {$2}

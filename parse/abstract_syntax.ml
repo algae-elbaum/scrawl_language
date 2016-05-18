@@ -64,7 +64,10 @@ and expr =
 
     | WhileExpr of {cond: expr;
                     body: expr list;
+                    preface: expr;
                     pos: pos}
+
+    | NoOp of {pos: pos}
 
 and var_expr = 
     | SimpleVar of {ident: string;
@@ -191,9 +194,12 @@ and comp_Expr xpr1 xpr2 =
       ForExpr {iter_var = iv2; cond = c2; iter = i2; body = b2; _ } ->
         (comp_Expr iv1 iv2) && (comp_Expr c1 c2)
         && (comp_Expr i1 i2) && (comp_ExprList b1 b2)
-    | WhileExpr {cond = c1; body = b1; _},
-      WhileExpr {cond = c2; body = b2; _} ->
-        (comp_Expr c1 c2) && (comp_ExprList b1 b2)
+    | WhileExpr {cond = c1; body = b1; preface = p1; _},
+      WhileExpr {cond = c2; body = b2; preface = p2; _} ->
+        (comp_Expr c1 c2) && (comp_ExprList b1 b2) && (comp_Expr p1 p2)
+    | NoOp {pos = p1},
+      NoOp {pos = p2} ->
+        true
     | _, _ -> false
 
 and comp_ExprList lst1 lst2 =
@@ -306,9 +312,11 @@ and prettyPrint_Expr xpr =
         ^ (prettyPrint_Expr cond) ^ "; " 
         ^ (prettyPrint_Expr iter) ^ ")\n{\n" 
         ^ (prettyPrint_ExprList body) ^ "}"
-    | WhileExpr {cond; body; _} -> 
+    | WhileExpr {cond; body; preface;_} ->
+         (prettyPrint_Expr preface) ^ "\n" ^ 
         "WHILE " ^ (prettyPrint_Expr cond) 
         ^ "{" ^ (prettyPrint_ExprList body) ^ "}"
+    | NoOp {pos}-> ""
 
 and prettyPrint_ExprList lst =
     match lst with
@@ -360,7 +368,8 @@ let rec extract_pos xpr =
     | UnOpExpr {op; arg; pos} -> pos
     | IfExpr {cond; body;  else_expr; pos} -> pos
     | ForExpr {iter_var; cond; iter; body; pos} -> pos
-    | WhileExpr {cond; body; pos} -> pos
+    | WhileExpr {cond; body; preface; pos} -> pos
+    | NoOp {pos} -> pos
 
 and extract_pos_var var =
     match var with
