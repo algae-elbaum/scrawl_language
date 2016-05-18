@@ -44,7 +44,6 @@ and chk_ExprList lst env del errs =
 
 and chk_Expr xpr env del errs =
     match xpr with
-    | NoOp {pos}-> NONE
     | VarExpr var -> chk_varExpr var env del errs
     | DeclExpr decl -> chk_declExpr decl env del errs
     | AssignExpr {var; value; pos} -> 
@@ -134,29 +133,31 @@ and chk_Expr xpr env del errs =
             begin 
             if arg_type <> INT
                 then 
-                    errs := ("Operand of bitwise not does not have type int" 
+                    errs := ("Operand of bitwise not does not have type int." 
                             ^ (pos_string pos)) :: !errs
             end;
             INT
         | LNOT ->
             if arg_type <> BOOL
-                then errs := ("Operand of logical not does not have type bool" 
+                then errs := ("Operand of logical not does not have type bool."
                              ^ (pos_string pos)) :: !errs;
             BOOL
         | UMINUS ->
             if arg_type <> INT && arg_type <> FLOAT
-                then begin 
+                then begin
                      errs := ("Operand of arithmetic negation does not does not"
-                             ^ " have arithmetic type" 
+                             ^ " have arithmetic type." 
                              ^ (pos_string pos)) :: !errs;
                      INT
                      end
                 else arg_type
         end
 
-    | IfExpr {cond; body;  else_expr; _ } -> 
+    | IfExpr {cond; body;  else_expr; pos} -> 
         begin
-        (fun _ -> ()) (chk_Expr cond env del errs);
+        if (chk_Expr cond env del errs) <> BOOL
+            then errs := ("Condition of if statement does not have type bool."
+                          ^ (pos_string pos)) :: !errs;
         Stack.push "*" !del; (* Start a new scope *)
         (fun _ -> ()) (chk_ExprList body env del errs);
         rewind_env env del;
@@ -167,15 +168,18 @@ and chk_Expr xpr env del errs =
         end
     | ForExpr _  -> 
         raise (Invalid_argument "Type/scope checker got AST with for loop (compiler bug)")
-    | WhileExpr {cond; body; preface;_} ->
+    | WhileExpr {cond; body; preface; pos} ->
         begin
-        (fun _ -> ()) (chk_Expr preface env del errs);
-        (fun _ -> ()) (chk_Expr cond env del errs);
         Stack.push "*" !del; (* Start a new scope *)
+        (fun _ -> ()) (chk_Expr preface env del errs);
+        if (chk_Expr cond env del errs) <> BOOL
+            then errs := ("Condition of for/while statement does not have type bool."
+                          ^ (pos_string pos)) :: !errs;
         (fun _ -> ()) (chk_ExprList body env del errs);
         rewind_env env del;
         NONE
         end
+    | NoOp _ -> NONE
 
 (* Any appearence of a var must have the var already in scope. Anything that
    adds a symbol to the scope is not a var. Those will be decls and params *)
@@ -258,7 +262,8 @@ and chk_argTypes arg_types param_types arg_locs pos errs =
                            ^ (pos_string pos)) :: !errs
     | _, _, _ -> ()
 
-(* TODO 5: allow greater diversity in allowed bitwise and logical binop operands *)
+(* TODO 5: Allow greater diversity in allowed bitwise and logical binop operands.
+           (Also for if/for/while conditions)  *)
 (* Bitwise ops require integer operands *)
 and chk_bitwise_op t1 t2 pos errs =
     if (t1 <> INT)

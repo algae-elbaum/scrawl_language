@@ -54,7 +54,8 @@ and simplify_Expr xpr=
                    body = (simplify_ExprList body);
                    preface = (simplify_Expr preface);
                    pos}
-    | NoOp _
+    (* List the rest out for explicitness' sake *)
+    | NoOp
     | IntLitExpr _
     | FloatLitExpr _
     | StringLitExpr _
