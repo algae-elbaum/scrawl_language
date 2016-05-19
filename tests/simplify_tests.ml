@@ -2,9 +2,9 @@ open Abstract_syntax
 
 (** A test which opens a file, parses it, and compares the resulting AST with
     the expected AST. Positions are not tested *)
-let parse_structure_test () = 
+let simplify_while_test () = 
     Printf.printf "Parsing a file with no errors and checking its AST\n";
-    let file = open_in "tests/parse_good_structure.spl" in
+    let file = open_in "tests/simplify_while_test.spl" in
     let try_wrap () =
         let lexbuf = Lexing.from_channel file in
         try
@@ -21,7 +21,7 @@ let parse_structure_test () =
                 Printf.printf "Parsing error at line: %d, char: %d\n" ln ch;
                 AST []
     in
-    let ast = try_wrap () in
+    let ast = Simplifications.simplify (try_wrap ()) in
     let correct_ast =
         AST [DeclExpr (SimpleDecl {var_type = INT;
                                    ident = "i";
@@ -32,27 +32,12 @@ let parse_structure_test () =
                                              pos = (0,0)}; 
                          pos = (0,0)};
 
-             ForExpr {iter_var = AssignExpr {var = SimpleVar {ident = "i";
-                                                              pos = (0,0)};
-                                             value = IntLitExpr {value = 0;
-                                                                 pos = (0,0)}; 
-                                             pos = (0,0)};
-                      cond = BinOpExpr {op = LESS;
+             WhileExpr {cond = BinOpExpr {op = LESS;
                                         argl = VarExpr (SimpleVar {ident = "i";
                                                                    pos = (0,0)});
                                         argr= IntLitExpr {value = 10;
                                                           pos = (0,0)};
                                         pos = (0,0)};
-                      iter = AssignExpr {var = SimpleVar {ident = "i";
-                                                          pos = (0,0)};
-                                         value = BinOpExpr {op = PLUS;
-                                                            argl = VarExpr (SimpleVar 
-                                                                    {ident = "i";
-                                                                     pos = (0,0)});
-                                                            argr= IntLitExpr {value = 1;
-                                                                             pos = (0,0)};
-                                                            pos = (0,0)}; 
-                                         pos = (0,0)};
                       body = [
                         DeclExpr (FuncDecl {func_type = 
                                                 ScrawlFuncType {param_types =
@@ -103,75 +88,35 @@ let parse_structure_test () =
                                                                      pos = (0,0)});
                                                           StringLitExpr {value = "12";
                                                                          pos = (0,0)}];
-                                                  pos = (0,0)})
+                                                  pos = (0,0)});
+                        AssignExpr {var = SimpleVar {ident = "i";
+                                                          pos = (0,0)};
+                                         value = BinOpExpr {op = PLUS;
+                                                            argl = VarExpr (SimpleVar 
+                                                                    {ident = "i";
+                                                                     pos = (0,0)});
+                                                            argr= IntLitExpr {value = 1;
+                                                                             pos = (0,0)};
+                                                            pos = (0,0)}; 
+                                         pos = (0,0)};
                       ];
+                      preface = AssignExpr {var = SimpleVar {ident = "i";
+                                                             pos = (0,0)};
+                                            value = IntLitExpr {value = 0;
+                                                                pos = (0,0)}; 
+                                            pos = (0,0)};
                       pos = (0,0)}
         ] in
-        
+        (* begin *)
+        (* Printf.printf "%s\n\n" (Abstract_syntax.prettyPrint_Tree(Simplifications.simplify correct_ast)); *)
     if Abstract_syntax.comp_AST ast correct_ast
         then (Printf.printf "Parsed into correct AST\n"; true)
         else (Printf.printf "Parsed into incorrect AST\n"; 
               Printf.printf "result was:\n%s\n\n" (Abstract_syntax.prettyPrint_Tree ast);
               Printf.printf "correct is:\n%s\n\n" (Abstract_syntax.prettyPrint_Tree correct_ast);
               false)
-
-(** A test which opens a file that shouldn't generate any parsing errors and
-    attempts to parse it *)
-let parse_ok_test () =
-    let filename =  "tests/parse_good.spl" in
-    Printf.printf "Parsing a file with no errors. (%s)\n" filename;
-    let file = open_in filename in
-    let try_wrap () =
-        let lexbuf = Lexing.from_channel file in
-        try
-            let _ = Parser.main Lexer.tokenize lexbuf in
-            Printf.printf "Successfully parsed\n";
-            close_in file;
-            true
-        with
-            | Parsing_globals.Syntax_error (ln, ch) ->
-                Printf.printf "Syntax error at line: %d, char: %d\n" ln ch;
-                false
-            | Parser.Error ->
-                let ln, ch = Lexer.pos_info lexbuf in
-                Printf.printf "Parsing error at line: %d, char: %d\n" ln ch;
-                false
-    in try_wrap ()
-
-(** A test which opens files that should generate parsing errors and attempts to
-    parse them *)
-let parse_bad_test () =
-    Printf.printf "Parsing files with errors.\n";
-    let error_files = ["tests/parse_bad_1.spl";
-                       "tests/parse_bad_2.spl";
-                       "tests/parse_bad_3.spl";
-                       "tests/parse_bad_4.spl";
-                       "tests/parse_bad_5.spl";] in
-    let error_parse f =
-        let file = open_in f in
-        let try_wrap () =
-            let lexbuf = Lexing.from_channel file in
-            try
-                let _ = Parser.main Lexer.tokenize lexbuf in
-                Printf.printf "Parsed %s to completion. Should have errored\n" f;
-                close_in file;
-                false
-            with
-                | Parsing_globals.Syntax_error (ln, ch) ->
-                    Printf.printf "Syntax error in %s at line: %d, char: %d\n" f ln ch;
-                    false
-                | Parser.Error ->
-                    let ln, ch = Lexer.pos_info lexbuf in
-                    Printf.printf "Successfully got a parsing error";
-                    Printf.printf " in %s at line: %d, char: %d\n" f ln ch;
-                    true
-        in try_wrap ()
-    in List.fold_left (fun a b -> a && b) true (List.map error_parse error_files)
-
-
+      (* end *)
 
 (** List of functions for the test script to use as tests *)
-let test_list = [("Parse ok test", parse_ok_test);
-                 ("Parse bad test", parse_bad_test);
-                 ("Parser structure test", parse_structure_test);]
+let test_list = [("Simplify While Test", simplify_while_test);]
 
