@@ -1,6 +1,7 @@
 %{
     let types_of_params params =
-       List.map (fun (Abstract_syntax.QualIdent {ident_type; ident; _}) -> ident_type) params 
+       List.map (fun (Abstract_syntax.QualIdent {ident_type; ident; _}) -> ident_type)
+                params 
 %}
 
 
@@ -159,22 +160,30 @@ bin_op:
     | POW {Abstract_syntax.POW, $1}
 
 un_op_expr:
-  | un_op expr %prec UMINUS {Abstract_syntax.UnOpExpr {op=fst $1; arg=$2; pos=snd $1}}
+    | un_op expr %prec UMINUS {Abstract_syntax.UnOpExpr {op=fst $1; arg=$2; pos=snd $1}}
 
 un_op:
-  | BNOT {Abstract_syntax.BNOT, $1}
-  | LNOT {Abstract_syntax.LNOT, $1}
-  | MINUS {Abstract_syntax.UMINUS, $1}
+    | BNOT {Abstract_syntax.BNOT, $1}
+    | LNOT {Abstract_syntax.LNOT, $1}
+    | MINUS {Abstract_syntax.UMINUS, $1}
 
 control_flow:
-  | IF LPAREN expr RPAREN block 
-    {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr = []; pos=$1}}
-  | IF LPAREN expr RPAREN block ELSE block 
-    {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr=$7; pos=$1}}
-  | FOR LPAREN expr SEMICOLON expr SEMICOLON expr RPAREN block
-    {Abstract_syntax.ForExpr {iter_var=$3; cond=$5; iter=$7; body=$9; pos=$1}}
-  | WHILE LPAREN expr RPAREN block 
-    {Abstract_syntax.WhileExpr {cond=$3; body=$5; preface = Abstract_syntax.NoOp {pos = $1}; pos=$1}}
+    | IF LPAREN expr RPAREN block 
+        {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr = []; pos=$1}}
+    | IF LPAREN expr RPAREN block ELSE block 
+        {Abstract_syntax.IfExpr {cond=$3; body=$5; else_expr=$7; pos=$1}}
+    (* It's permissible to leave out any of the three exprs here:  *)
+    | FOR LPAREN opt_expr SEMICOLON opt_expr SEMICOLON opt_expr RPAREN block
+        {Abstract_syntax.ForExpr {iter_var=$3; cond=$5; iter=$7; body=$9; pos=$1}}
+    | WHILE LPAREN expr RPAREN block 
+        {Abstract_syntax.WhileExpr {cond=$3;
+                                    body=$5; 
+                                    preface = Abstract_syntax.NoOp; 
+                                    pos=$1}}
+
+opt_expr:
+  | expr {$1}
+  |      {Abstract_syntax.NoOp}
 
 block:
   | LCURLY expr_list RCURLY {$2}
