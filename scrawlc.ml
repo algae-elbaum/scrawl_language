@@ -1,3 +1,28 @@
+
+(** Lex and parse a file into its AST.  *)
+let get_ast filename = 
+    let file = open_in filename in
+    let try_wrap () =
+        let lexbuf = Lexing.from_channel file in
+        try
+            let result = Parser.main Lexer.tokenize lexbuf in
+            Printf.printf "Parsing completed\n";
+            close_in file;
+            result
+        with
+            | Parsing_globals.Syntax_error (ln, ch) ->
+                Printf.printf "Syntax error in %s at line: %d, char: %d\n" filename ln ch;
+                close_in file;
+                Abstract_syntax.AST []
+            | Parser.Error ->
+                let ln, ch = Lexer.pos_info lexbuf in
+                Printf.printf "Parsing error in %s at line: %d, char: %d\n" filename ln ch;
+                close_in file;
+                Abstract_syntax.AST []
+    in
+    try_wrap ()
+
+
 (** The main function of the compiler *)
 let () =
     if Array.length Sys.argv <> 2 then
@@ -5,24 +30,8 @@ let () =
     else
     (* Tokenize the file and exit *)
     let filename = Sys.argv.(1) in
-    let file = open_in filename in
-    let try_wrap () =
-        let lexbuf = Lexing.from_channel file in
-        try
-            let result = Parser.main Lexer.tokenize lexbuf in
-            Printf.printf "Parsing completed\n\n";
-            close_in file;
-            result
-        with
-            | Parsing_globals.Syntax_error (ln, ch) ->
-                Printf.printf "Syntax error at line: %d, char: %d\n\n" ln ch;
-                Abstract_syntax.AST []
-            | Parser.Error ->
-                let ln, ch = Lexer.pos_info lexbuf in
-                Printf.printf "Parsing error at line: %d, char: %d\\nn" ln ch;
-                Abstract_syntax.AST []
-    in
-    let ast = try_wrap () in
+    let ast = get_ast filename in
+    if ast <> Abstract_syntax.AST [] then
     let simpler_ast = Simplifications.simplify ast in
     let type_and_scope_errs = Type_and_scope_checking.chk_type_and_scope simpler_ast in
     if type_and_scope_errs <> [] then

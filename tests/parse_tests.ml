@@ -4,24 +4,7 @@ open Abstract_syntax
     the expected AST. Positions are not tested *)
 let parse_structure_test () = 
     Printf.printf "Parsing a file with no errors and checking its AST\n";
-    let file = open_in "tests/parse_good_structure.spl" in
-    let try_wrap () =
-        let lexbuf = Lexing.from_channel file in
-        try
-            let result = Parser.main Lexer.tokenize lexbuf in
-            Printf.printf "Parsing completed\n";
-            close_in file;
-            result
-        with
-            | Parsing_globals.Syntax_error (ln, ch) ->
-                Printf.printf "Syntax error at line: %d, char: %d\n" ln ch;
-                AST []
-            | Parser.Error ->
-                let ln, ch = Lexer.pos_info lexbuf in
-                Printf.printf "Parsing error at line: %d, char: %d\n" ln ch;
-                AST []
-    in
-    let ast = try_wrap () in
+    let ast = Scrawlc.get_ast "tests/parse_good_structure.spl" in
     let correct_ast =
         AST [DeclExpr (SimpleDecl {var_type = INT;
                                    ident = "i";
@@ -120,23 +103,7 @@ let parse_structure_test () =
 let parse_ok_test () =
     let filename =  "tests/parse_good.spl" in
     Printf.printf "Parsing a file with no errors. (%s)\n" filename;
-    let file = open_in filename in
-    let try_wrap () =
-        let lexbuf = Lexing.from_channel file in
-        try
-            let _ = Parser.main Lexer.tokenize lexbuf in
-            Printf.printf "Successfully parsed\n";
-            close_in file;
-            true
-        with
-            | Parsing_globals.Syntax_error (ln, ch) ->
-                Printf.printf "Syntax error at line: %d, char: %d\n" ln ch;
-                false
-            | Parser.Error ->
-                let ln, ch = Lexer.pos_info lexbuf in
-                Printf.printf "Parsing error at line: %d, char: %d\n" ln ch;
-                false
-    in try_wrap ()
+    (Scrawlc.get_ast filename) <> AST []
 
 (** A test which opens files that should generate parsing errors and attempts to
     parse them *)
@@ -147,25 +114,7 @@ let parse_bad_test () =
                        "tests/parse_bad_3.spl";
                        "tests/parse_bad_4.spl";
                        "tests/parse_bad_5.spl";] in
-    let error_parse f =
-        let file = open_in f in
-        let try_wrap () =
-            let lexbuf = Lexing.from_channel file in
-            try
-                let _ = Parser.main Lexer.tokenize lexbuf in
-                Printf.printf "Parsed %s to completion. Should have errored\n" f;
-                close_in file;
-                false
-            with
-                | Parsing_globals.Syntax_error (ln, ch) ->
-                    Printf.printf "Syntax error in %s at line: %d, char: %d\n" f ln ch;
-                    false
-                | Parser.Error ->
-                    let ln, ch = Lexer.pos_info lexbuf in
-                    Printf.printf "Successfully got a parsing error";
-                    Printf.printf " in %s at line: %d, char: %d\n" f ln ch;
-                    true
-        in try_wrap ()
+    let error_parse f = (Scrawlc.get_ast f) = AST []
     in List.fold_left (fun a b -> a && b) true (List.map error_parse error_files)
 
 

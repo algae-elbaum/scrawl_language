@@ -1,27 +1,10 @@
 open Abstract_syntax
 
-(** A test which opens a file, parses it, and compares the resulting AST with
-    the expected AST. Positions are not tested *)
+(** A test which parses a file and runs the simplification function on it, checking
+    the simplification worked correctly *)
 let simplify_while_test () = 
-    Printf.printf "Parsing a file with no errors and checking its AST\n";
-    let file = open_in "tests/simplify_while_test.spl" in
-    let try_wrap () =
-        let lexbuf = Lexing.from_channel file in
-        try
-            let result = Parser.main Lexer.tokenize lexbuf in
-            Printf.printf "Parsing completed\n";
-            close_in file;
-            result
-        with
-            | Parsing_globals.Syntax_error (ln, ch) ->
-                Printf.printf "Syntax error at line: %d, char: %d\n" ln ch;
-                AST []
-            | Parser.Error ->
-                let ln, ch = Lexer.pos_info lexbuf in
-                Printf.printf "Parsing error at line: %d, char: %d\n" ln ch;
-                AST []
-    in
-    let ast = Simplifications.simplify (try_wrap ()) in
+    Printf.printf "Parsing a file with no errors and checking that simplifying its AST works correctly\n";
+    let ast = Simplifications.simplify (Scrawlc.get_ast "tests/simplify_while_test.spl") in
     let correct_ast =
         AST [DeclExpr (SimpleDecl {var_type = INT;
                                    ident = "i";
@@ -110,8 +93,8 @@ let simplify_while_test () =
         (* begin *)
         (* Printf.printf "%s\n\n" (Abstract_syntax.prettyPrint_Tree(Simplifications.simplify correct_ast)); *)
     if Abstract_syntax.comp_AST ast correct_ast
-        then (Printf.printf "Parsed into correct AST\n"; true)
-        else (Printf.printf "Parsed into incorrect AST\n"; 
+        then (Printf.printf "Parsed and simplified into correct AST\n"; true)
+        else (Printf.printf "Parsed and simplified into incorrect AST\n"; 
               Printf.printf "result was:\n%s\n\n" (Abstract_syntax.prettyPrint_Tree ast);
               Printf.printf "correct is:\n%s\n\n" (Abstract_syntax.prettyPrint_Tree correct_ast);
               false)

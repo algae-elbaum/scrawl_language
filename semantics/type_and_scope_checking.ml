@@ -48,13 +48,19 @@ and chk_Expr xpr env del errs =
     | DeclExpr decl -> chk_declExpr decl env del errs
     | AssignExpr {var; value; pos} -> 
         let (t1, t2) = ((chk_varExpr var env del errs), (chk_Expr value env del errs)) in
-        begin
-        if t1 <> t2
-            then errs := ("Type " ^ (string_of_type t2) ^ " does not match type " 
-                          ^ (string_of_type t1) ^ " in assignment."
-                          ^ (pos_string pos)) :: !errs;
-        t1
-        end
+        (* If t1 is none that means the lhs was out of scope, so reporting a type error
+           would be redundant. *)
+        if t1 = NONE
+            then
+                t2
+            else
+                begin
+                if not (comp_ScrawlType t1 t2) && (t1 <> FLOAT || t2 <> INT)
+                    then errs := ("Type " ^ (string_of_type t2) ^ " does not match type " 
+                                  ^ (string_of_type t1) ^ " in assignment."
+                                  ^ (pos_string pos)) :: !errs;
+                t1
+                end
     | LambdaExpr {func_type; params; body; _} -> 
         begin
         Stack.push "*" !del; (* Start a new scope *)
@@ -145,8 +151,7 @@ and chk_Expr xpr env del errs =
         | UMINUS ->
             if arg_type <> INT && arg_type <> FLOAT
                 then begin
-                     errs := ("Operand of arithmetic negation does not does not"
-                             ^ " have arithmetic type." 
+                     errs := ("Operand of arithmetic negation does not have arithmetic type."
                              ^ (pos_string pos)) :: !errs;
                      INT
                      end
@@ -179,7 +184,7 @@ and chk_Expr xpr env del errs =
         rewind_env env del;
         NONE
         end
-    | NoOp _ -> NONE
+    | NoOp -> NONE
 
 (* Any appearence of a var must have the var already in scope. Anything that
    adds a symbol to the scope is not a var. Those will be decls and params *)
@@ -252,10 +257,11 @@ and chk_argTypes arg_types param_types arg_locs pos errs =
     match arg_types, param_types, arg_locs with
     | h1::t1, h2::t2, h3::t3 ->
         begin
-        if h1 <> h2 then errs := ("Argument does not match parameter type." 
-                                  ^ (pos_string h3)) :: !errs;
+        if not (comp_ScrawlType h1 h2) && (h2 <> FLOAT || h1 <> INT)
+            then errs := ("Argument does not match parameter type." ^ (pos_string h3)) :: !errs;
         end;
         chk_argTypes t1 t2 t3 pos errs
+    | [], [], [] -> ()
     | [], _, _ -> errs := ("Not enough arguments in function call." 
                            ^ (pos_string pos)) :: !errs
     | _, [], _ -> errs := ("Too many arguments in function call."

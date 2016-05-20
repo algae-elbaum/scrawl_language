@@ -337,11 +337,11 @@ and prettyPrint_Tree tree =
     more appropriate for error messages *)
 and string_of_type q =
     match q with
-    | INT -> "INT"
-    | FLOAT -> "FLOAT"
-    | BOOL -> "BOOL"
-    | STRING -> "STRING"
-    | NONE -> "NONE"
+    | INT -> "int"
+    | FLOAT -> "float"
+    | BOOL -> "bool"
+    | STRING -> "string"
+    | NONE -> "none"
     | ScrawlArrayType {array_type; len; _} ->
         (string_of_type array_type) ^ "[" ^ (string_of_int len) ^ "]"
     | ScrawlFuncType {param_types; ret_type} -> 

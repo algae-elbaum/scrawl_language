@@ -5,7 +5,11 @@
  *)
 
 (** The list of tests to be run *)
-let tests = Lex_tests.test_list @ Parse_tests.test_list @ Simplify_tests.test_list in
+let tests =   Lex_tests.test_list 
+            @ Parse_tests.test_list 
+            @ Simplify_tests.test_list 
+            @ Type_and_scope_tests.test_list
+in
 
 (** A function to run a given test and return a tuple of its name and return value *)
 let run_test (name, test) = 

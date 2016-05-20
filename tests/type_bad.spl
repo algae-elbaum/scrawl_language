@@ -1,0 +1,105 @@
+int a;
+a = 6.; // Type error
+a = "sdfsdaf"; // Type error
+a = 3;
+float b;
+b = 3.;
+b = 6;
+b = "asf"; // Type error
+
+fun (float param1, string param2) lamb;
+lamb = fun (float param1, string param2) ->
+{
+    return param1;
+};
+
+int[5][6] c;
+int[5] d;
+int[6] e;
+
+lamb(5, "adsf");
+lamb(4., "sdzvx");
+lamb(c, "dsf"); // Type error
+lamb(6.4, 5); // Type error
+lamb(1); // Type error
+lamb(1, "adsf", 23); // Type error
+
+c = 4; // Type error
+c[3] = 6; // Type error
+c[2] = d;
+c[4] = e; // Type error
+c[2][4] = 3;
+c[2][1] = 34.2; // Type error
+c[4.2]; // Type error
+a[3];
+
+if (2) // Type error
+{
+    "sadf";
+} < 54; // Type error
+
+1 > for (a = 4; "wooo"; a = 5) // Double type error
+{
+    "bark bark";
+};
+
+while (c) { 1; "silly";}; // Type error
+
+a = 5 & 2;
+3 & 2.; // Type error
+"asf" & 1; // Type error
+1 & c; // Type error
+
+bool cool;
+cool = true;
+bool tool;
+tool = false;
+
+cool = cool and tool;
+cool = tool and a; // Type error
+a and d; // Type error
+b && c; // Type error
+cool && "yo"; // Type error
+
+1 == a;
+b == 5.3;
+a == b; // Type error
+lamb == lamb; // Type error
+c == c; // Type error
+1 == "top"; // Type error
+"woo" == "yay";
+cool == tool;
+cool == "yay"; // Type error
+
+b = a + b;
+a = a + b; // Type error
+a = a + 4;
+c + a; // Type error
+lamb + b; // Type error
+a + "a"; // Type error
+cool + "a"; // Type error
+
+~6;
+~a;
+~b; // Type error
+~lamb; // Type error
+~c; // Type error
+~"bottles"; // Type error
+~tool; // Type error
+
+!6; // Type error
+!a; // Type error
+!b; // Type error
+!lamb; // Type error
+!c; // Type error
+!"bottles"; // Type error
+!tool;
+
+-6;
+-a;
+-b;
+-lamb; // Type error
+-c; // Type error
+-"bottles"; // Type error
+-tool; // Type error
+
