@@ -11,5 +11,18 @@ for (i = 0; i < 10; i = i + 1)
     // Note that we can add an extra comma
     return hiphip(i, "12",);
 };
-// Note that comments work.
-// TODO: add more stuff
+
+for (; j < 10; j = j + 1)
+{
+    print(j);
+};
+
+for (; ; z = z + 1)
+{
+    print(z);
+};
+
+for (; k < 10;)
+{
+    print(k);
+};

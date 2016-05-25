@@ -88,7 +88,70 @@ let simplify_while_test () =
                                             value = IntLitExpr {value = 0;
                                                                 pos = (0,0)}; 
                                             pos = (0,0)};
-                      pos = (0,0)}
+                      pos = (0,0)};
+              WhileExpr {cond = BinOpExpr {op = LESS;
+                                        argl = VarExpr (SimpleVar {ident = "j";
+                                                                   pos = (0,0)});
+                                        argr= IntLitExpr {value = 10;
+                                                          pos = (0,0)};
+                                        pos = (0,0)};
+                      body = [
+                        FuncCallExpr {func = "print";
+                                                  args = [VarExpr (SimpleVar 
+                                                                    {ident = "j";
+                                                                     pos = (0,0)});];
+                                                  pos = (0,0)};
+                        AssignExpr {var = SimpleVar {ident = "j";
+                                                          pos = (0,0)};
+                                         value = BinOpExpr {op = PLUS;
+                                                            argl = VarExpr (SimpleVar 
+                                                                    {ident = "j";
+                                                                     pos = (0,0)});
+                                                            argr= IntLitExpr {value = 1;
+                                                                             pos = (0,0)};
+                                                            pos = (0,0)}; 
+                                         pos = (0,0)};
+                        
+                      ];
+                      preface = NoOp;
+                      pos = (0,0)};
+              WhileExpr {cond = NoOp;
+                      body = [
+                        FuncCallExpr {func = "print";
+                                                  args = [VarExpr (SimpleVar 
+                                                                    {ident = "z";
+                                                                     pos = (0,0)});];
+                                                  pos = (0,0)};
+                        AssignExpr {var = SimpleVar {ident = "z";
+                                                          pos = (0,0)};
+                                         value = BinOpExpr {op = PLUS;
+                                                            argl = VarExpr (SimpleVar 
+                                                                    {ident = "z";
+                                                                     pos = (0,0)});
+                                                            argr= IntLitExpr {value = 1;
+                                                                             pos = (0,0)};
+                                                            pos = (0,0)}; 
+                                         pos = (0,0)};
+                        
+                      ];
+                      preface = NoOp;
+                      pos = (0,0)};
+              WhileExpr {cond = BinOpExpr {op = LESS;
+                                        argl = VarExpr (SimpleVar {ident = "k";
+                                                                   pos = (0,0)});
+                                        argr= IntLitExpr {value = 10;
+                                                          pos = (0,0)};
+                                        pos = (0,0)};
+                      body = [
+                        FuncCallExpr {func = "print";
+                                                  args = [VarExpr (SimpleVar 
+                                                                    {ident = "k";
+                                                                     pos = (0,0)});];
+                                                  pos = (0,0)};    
+                        NoOp;                    
+                      ];
+                      preface = NoOp;
+                      pos = (0,0)};
         ] in
         (* begin *)
         (* Printf.printf "%s\n\n" (Abstract_syntax.prettyPrint_Tree(Simplifications.simplify correct_ast)); *)
