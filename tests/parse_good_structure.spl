@@ -2,8 +2,8 @@ int i;
 i = 5;
 for (i = 0; i < 10; i = i + 1)
 {
-    fun (int param1, string param2) func;
-    func = fun (int param1, string param2) ->
+    fun func (int param1, string param2) -> int;
+    func = fun (int param1, string param2) -> int
     {
         return 5;
     };

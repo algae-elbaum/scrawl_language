@@ -39,8 +39,33 @@ let rec chk_type_and_scope (AST tree) =
 (* The return value of each of these functions is the type of the expression the
    function was called on. *)
 and chk_ExprList lst env del errs =
-    (fun _ -> ()) (List.map (fun y -> chk_Expr y env del errs) lst);
-    NONE
+    (* First simply check every expression *)
+    let types = (List.map (fun x -> chk_Expr x env del errs) lst) in
+    (* Pair each expression with its type *)
+    let zipped = List.mapi (fun idx x -> (x, List.nth types idx)) lst in
+    (* Then extract the return expressions and check that they agree *)
+    let returns = List.filter (fun (x, _) -> match x with | ReturnExpr _ -> true | _ -> false)
+                              zipped in
+    
+    let rec check_type_equality pair_lst des_type =
+        match pair_lst with
+        | [] -> true
+        | (_, curr_type) :: t -> curr_type = des_type && check_type_equality t des_type
+    in
+    let des_type = 
+        if returns = [] 
+            then NONE
+            else snd (List.hd returns)
+    in
+    if check_type_equality returns des_type
+        then des_type
+        else 
+            begin
+            let pos = extract_pos (fst (List.hd returns)) in
+            errs := ("Return statements in function definition do not agree on return type."
+                    ^ (pos_string pos)) :: !errs;
+            NONE
+            end
 
 and chk_Expr xpr env del errs =
     match xpr with
@@ -61,11 +86,18 @@ and chk_Expr xpr env del errs =
                                   ^ (pos_string pos)) :: !errs;
                 t1
                 end
-    | LambdaExpr {func_type; params; body; _} -> 
+    | LambdaExpr {func_type; params; body; pos} -> 
         begin
         Stack.push "*" !del; (* Start a new scope *)
         chk_paramList params env del errs; (* Adds each param to the env *)
-        (fun _ -> ()) (chk_ExprList body env del errs);
+        let returned = chk_ExprList body env del errs in
+        let ScrawlFuncType {param_types; ret_type} = func_type in
+        if (ret_type <> returned)
+            then
+                errs := ("Returned type " ^ (string_of_type returned) 
+                         ^ " does not match declared return type " 
+                         ^  (string_of_type ret_type) 
+                         ^ " in function definition." ^ (pos_string pos)) :: !errs;
         rewind_env env del;
         func_type
         end
@@ -167,9 +199,9 @@ and chk_Expr xpr env del errs =
         (fun _ -> ()) (chk_ExprList body env del errs);
         rewind_env env del;
         Stack.push "*" !del; (* Start a new scope *)
-        (fun _ -> ()) (chk_ExprList else_expr env del errs);
+        let ret =(chk_ExprList else_expr env del errs) in
         rewind_env env del;
-        NONE
+        ret
         end
     | ForExpr _  -> 
         raise (Invalid_argument "Type/scope checker got AST with for loop (compiler bug)")
@@ -180,9 +212,9 @@ and chk_Expr xpr env del errs =
         if (chk_Expr cond env del errs) <> BOOL
             then errs := ("Condition of for/while statement does not have type bool."
                           ^ (pos_string pos)) :: !errs;
-        (fun _ -> ()) (chk_ExprList body env del errs);
+        let ret = (chk_ExprList body env del errs) in
         rewind_env env del;
-        NONE
+        ret
         end
     | NoOp -> NONE
 
@@ -230,12 +262,19 @@ and chk_declExpr d env del errs =
         add_ident ident arr_type env del;
         arr_type
         end
-    | FuncDecl {func_type; ident; params; body; _} ->
+    | FuncDecl {func_type; ident; params; body; pos} ->
         begin
         add_ident ident func_type env del;
         Stack.push "*" !del; (* Start a new scope *)
         chk_paramList params env del errs; (* Adds each param to the env *)
-        (fun _ -> ()) (chk_ExprList body env del errs);
+        let returned = chk_ExprList body env del errs in
+        let ScrawlFuncType {param_types; ret_type} = func_type in
+        if (body <> [] && ret_type <> returned)
+            then
+                errs := ("Returned type " ^ (string_of_type returned) 
+                         ^ " does not match declared return type " 
+                         ^  (string_of_type ret_type) 
+                         ^ " in function definition." ^ (pos_string pos)) :: !errs;
         rewind_env env del;
         func_type
         end

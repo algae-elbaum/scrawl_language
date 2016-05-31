@@ -7,8 +7,13 @@ b = 3.;
 b = 6;
 b = "asf"; // Type error
 
-fun (float param1, string param2) lamb;
-lamb = fun (float param1, string param2) ->
+fun lamb (float param1, string param2) -> int;
+lamb = fun (float param1, string param2) -> string // Type error
+{
+    return param1; // Type error
+};
+
+lamb = fun (int param1, string param2) -> int // Type error
 {
     return param1;
 };

@@ -32,6 +32,9 @@ let type_bad_test () =
         ["Type float does not match type int in assignment.";
          "Type string does not match type int in assignment.";
          "Type string does not match type float in assignment.";
+         "Returned type float does not match declared return type string in function definition.";
+         "Type <functype: (float, string) -> string> does not match type <functype: (float, string) -> int> in assignment.";
+         "Type <functype: (int, string) -> int> does not match type <functype: (float, string) -> int> in assignment.";
          "Argument does not match parameter type.";
          "Argument does not match parameter type.";
          "Not enough arguments in function call.";

@@ -25,7 +25,7 @@ let simplify_while_test () =
                         DeclExpr (FuncDecl {func_type = 
                                                 ScrawlFuncType {param_types =
                                                                     [INT; STRING];
-                                                                ret_type = NONE};
+                                                                ret_type = INT};
                                             ident = "func";
                                             params=
                                                 [QualIdent {ident_type = INT;
@@ -42,7 +42,7 @@ let simplify_while_test () =
                                                    func_type = 
                                                         ScrawlFuncType {param_types =
                                                                             [INT; STRING];
-                                                                        ret_type = NONE};
+                                                                        ret_type = INT};
                                                    params =  
                                                        [QualIdent {ident_type = INT;
                                                                    ident = "param1";

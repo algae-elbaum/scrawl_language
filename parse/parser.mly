@@ -108,17 +108,17 @@ decl:
   | func_decl {$1} 
 
 func_decl:
-  | FUNCSTART LPAREN param_list RPAREN IDENT
+  | FUNCSTART IDENT LPAREN param_list RPAREN ARROW scrawl_type
     {Abstract_syntax.FuncDecl {func_type=Abstract_syntax.ScrawlFuncType 
-                                            {param_types=types_of_params $3;
-                                             ret_type=Abstract_syntax.NONE}; 
-                               ident=fst $5; params=$3; body=[]; pos=$1}}
+                                            {param_types=types_of_params $4;
+                                             ret_type=$7}; 
+                               ident=fst $2; params=$4; body=[]; pos=$1}}
   (* We count definition at the time of declaration as part of declaration *)
-  | FUNCSTART LPAREN param_list RPAREN IDENT ARROW block
+  | FUNCSTART IDENT LPAREN param_list RPAREN ARROW scrawl_type block
     {Abstract_syntax.FuncDecl {func_type=Abstract_syntax.ScrawlFuncType
-                                            {param_types=types_of_params $3;
-                                             ret_type=Abstract_syntax.NONE}; 
-                               ident=fst $5; params=$3; body=$7; pos=$1}}
+                                            {param_types=types_of_params $4;
+                                             ret_type=$7}; 
+                               ident=""; params=$4; body=$8; pos=$1}}
 
 (* This is for declaring functions *)
 param_list:
@@ -132,11 +132,11 @@ assign:
   | var ASSIGN expr {Abstract_syntax.AssignExpr {var=$1; value=$3; pos=$2}}
 
 lambda:
-  | FUNCSTART LPAREN param_list RPAREN ARROW block 
+  | FUNCSTART LPAREN param_list RPAREN ARROW scrawl_type block 
     {Abstract_syntax.LambdaExpr {func_type=Abstract_syntax.ScrawlFuncType
                                             {param_types=types_of_params $3;
-                                            ret_type=Abstract_syntax.NONE};
-                                 params=$3; body=$6; pos=$1}}
+                                            ret_type=$6};
+                                 params=$3; body=$7; pos=$1}}
 
 bin_op_expr:
   | expr bin_op expr {Abstract_syntax.BinOpExpr {op=fst $2; argl=$1; argr=$3; pos=snd $2}}

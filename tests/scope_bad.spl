@@ -9,16 +9,16 @@ while (true)
     for (i = 0; i < 5; i = i + 1)
     {
         i = 10; // No problem here
-        fun (int param1, string param2) lamb;
+        fun lamb (int param1, string param2) -> int;
         param1 = 2; // param1 is out of scope
-        lamb = fun (int param1, string param2) ->
+        lamb = fun (int param1, string param2) -> int
         {
             return param1; // No problem here
         };
         lamb(31, "asdfasfd"); // No problem here
         param2 = 2; // param2 is out of scope
         
-        fun (int par1, string par2) lumber ->
+        fun lumber (int par1, string par2) -> string
         {
             par1 = 7; // No problem here
             return par2;//

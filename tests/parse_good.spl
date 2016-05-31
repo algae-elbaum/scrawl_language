@@ -2,13 +2,13 @@ simple_var; // this is a comment
 array_var[1];
 int decl;
 int[2] arrdecl;
-fun () funcdecl;
-fun (string a) funcdecl2;
-fun (string a) funcdecldef ->
+fun funcdecl () -> int;
+fun funcdecl2 (string a) -> float[3];
+fun funcdecldef (string a) -> string
 {
     return ret;
 };
-fun (int param) -> {};
+fun (int param) -> string[3][2] {};
 assign = 4;
 assign = assignval;
 123;
