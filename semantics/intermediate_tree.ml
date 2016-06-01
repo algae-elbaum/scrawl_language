@@ -32,7 +32,16 @@ and label = int
 
 and temp = int
 
+(*
 
-(* I don't quite understand what the different translation phases in the Tiger
-   book are talking about. They seem to be talking about some frame deal that
-   they said was mutually exclusive with lambda lifting *)
+let rec intermediate_of_ast (AST tree) =
+    (* We'll maintain a mutating environment and pass it around by reference to
+     avoid the cost of copying the hash table all the time. A deletion stack
+     follows it around and records what must be deleted when leaving an 
+     environment. *)
+    let env = ref (Hashtbl.create 10) in
+    let del = ref (Stack.create ()) in
+    (fun _ -> ()) (chk_ExprList tree env del errs);
+    List.rev !errs
+
+*)

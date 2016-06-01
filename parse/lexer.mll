@@ -43,6 +43,7 @@ rule tokenize = parse
     | "float"   { FLOAT_T (pos_info lexbuf) }
     | "bool"    { BOOL_T (pos_info lexbuf) }
     | "string"  { STRING_T (pos_info lexbuf) }
+    | "none"    { NONE_T (pos_info lexbuf) }
 
     | "&"       { BAND (pos_info lexbuf) }
     | "|"       { BOR (pos_info lexbuf) }

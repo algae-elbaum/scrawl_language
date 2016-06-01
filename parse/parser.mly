@@ -10,7 +10,7 @@
 %token <float * Abstract_syntax.pos> FLOAT_LIT
 %token <string * Abstract_syntax.pos> STRING_LIT
 %token <bool * Abstract_syntax.pos> BOOL_LIT
-%token <Abstract_syntax.pos> INT_T FLOAT_T STRING_T BOOL_T
+%token <Abstract_syntax.pos> INT_T FLOAT_T STRING_T BOOL_T NONE_T
 %token <Abstract_syntax.pos> BAND BOR BXOR BLEFT BRIGHT BNOT
 %token <Abstract_syntax.pos> LAND LOR LNOT EQ LESS GREATER
 %token <Abstract_syntax.pos> PLUS MINUS TIMES DIV MOD POW UMINUS
@@ -88,6 +88,7 @@ simple_type:
   | FLOAT_T {Abstract_syntax.FLOAT}
   | STRING_T {Abstract_syntax.STRING}
   | BOOL_T {Abstract_syntax.BOOL}
+  | NONE_T {Abstract_syntax.NONE}
 
 arr_type:
   (* pos at square brace to differentiate different dimensions *)

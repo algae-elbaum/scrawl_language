@@ -29,7 +29,7 @@ let rec chk_type_and_scope (AST tree) =
      avoid the cost of copying the hash table all the time. A deletion stack
      follows it around and records what must be deleted when leaving an 
      environment. A string also follows it around, and whenever there is a
-     scope or type error, an apporpriate error message is appended *)
+     scope or type error, an appropriate error message is appended *)
     let env = ref (Hashtbl.create 10) in
     let del = ref (Stack.create ()) in
     let errs = ref [] in

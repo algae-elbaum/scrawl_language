@@ -29,3 +29,24 @@ members of arrays)
 eg var, var1, _var2, var3[idx], var4[idx1][idx2]
 
 
+Need to put more stuff in here
+------------
+
+Free variables in functions, including lambdas are taken to refer to the object
+of the same name in scope of the function  definition. Changes to the variable
+in the function apply to the object to which it refers, and similarly changes to
+the object are reflected in the function execution.
+
+e.g.
+
+    string a = "a";
+    fun foo() -> none;
+    foo = fun () -> none
+    {
+        print(a);
+        a = "b";
+    };
+    foo();
+    foo();
+
+will print: ab
