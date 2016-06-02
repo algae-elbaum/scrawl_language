@@ -17,13 +17,11 @@ and interp_exprlist lst =
         interp_exprlist xss
         end
     | [] -> 0 (*Not sure about this*)
-and interp_expr xpr =
+and interp_expr xpr rest= (*The rest is only used for labels*)
     match xpr with
     | I_CONST x -> INT x
     | F_CONST x -> FLOAT x
-    (* | NAME x -> begin
-        how do I want to store where this label is?
-    end *)
+    | NAME x -> Hastabl.add !labels x rest
     (* Temp a = Stack[Hastabl.find x] *)
     | TEMP x -> 
         let pointer = Hashtbl.find !vars x in
@@ -31,7 +29,6 @@ and interp_expr xpr =
     (* The only way to write a var is with move, so we're going to be silly when we use move*)
     | BINOP (op, x1, x2) -> ((interp_binop op (interp_expr x1) (interp_expr x2)))
     | ALLOC_MEM (temp, i) -> begin
-        (* Array.fill array_vars !stack_pointer i 0; *)
         (* Everything is an array. even singletons *)
         Hashtbl.add !vars temp !stack_pointer;
         (* Add to the stack pointer *)
@@ -40,8 +37,17 @@ and interp_expr xpr =
     (* Mem x = Hastabl.find x *)
     | MEM x ->
         let pointer = Hashtbl.find !vars x
-    (* | CALL of expr * expr list
-    | ESEQ of stm * expr *)
+    | CALL (f, xprLst) -> begin
+        interp_exprlist xprLst;
+        match f with
+        | TEMP x -> interp_expr x
+        | LABEL x -> interp_expr x
+        | _ -> raise (Invalid_argument "Should never happen. Functionsshould be places")
+    end
+    | ESEQ (s, x) -> begin
+        interp_stm s;
+        interp_expr x
+    end
     | _ -> raise (Invalid_argument "Should never happen")
 (* Takes a binop and returns back a num *)
 and interp_binop op x1 x2 =
@@ -112,7 +118,40 @@ and interp_stm statement =
         interp_stm s1;
         interp_stm s2
     end
-    (* | JUMP of expr * label list
-    | CJUMP of relop * expr * expr * label * label
-    | LABEL of label *)
+    (* Not sure what the extra bits are for.
+    i.e. what is the expr and why are we passing a list? *)
+    | JUMP (x, l) -> let rest = Hashtbl.find !labels (hd l) in
+        interp_exprlist rest
+    | CJUMP (r, x1, x2, l1, l2) -> let x1' = interp_expr x1 in
+        let x2' = interp_expr x2 in
+        let r' = interp_relop r' x1' x2' in
+        if (r' x1' x2')
+            then
+                let rest = Hashtbl.find !labels l1 in
+                interp_exprlist rest
+            else
+                let rest = Hashtbl.find !labels l2 in
+                interp_exprlist rest
+    (* Jumps directly to a label *)
+    | LABEL (l) -> let rest = Hashtbl.find !labels (hd l) in
+        interp_exprlist rest
     | _ -> raise (Invalid_argument "Should never happen")
+and interp_relop op x1 x2=
+    match op , x1, x2 with
+    | EQ, INT y1, INT y2 -> if y1 = y2 then INT 1 else INT 0
+    | EQ, FLOAT y1, FLOAT y2 -> if y1 = y2 then INT 1 else INT 0
+
+    | LT, INT y1, INT y2 -> if y1 < y2 then INT 1 else INT 0
+    | LT, FLOAT y1, FLOAT y2 -> if y1 < y2 then INT 1 else INT 0 
+    
+    | GT, INT y1, INT y2 -> if y1 > y2 then INT 1 else INT 0
+    | GT, FLOAT y1, FLOAT y2 -> if y1 > y2 then INT 1 else INT 0 
+    
+    | LE, INT y1, INT y2 -> if y1 <= y2 then INT 1 else INT 0
+    | LE, FLOAT y1, FLOAT y2 -> if y1 <= y2 then INT 1 else INT 0 
+    
+    | GE, INT y1, INT y2 -> if y1 >= y2 then INT 1 else INT 0
+    | GE, FLOAT y1, FLOAT y2 -> if y1 >= y2 then INT 1 else INT 0
+    
+    | _, INT y1, FLOAT y2 -> raise (Invalid_argument "Ints and floats cannot be compared")
+    | _, FLOAT y1, INT y2 -> raise (Invalid_argument "Ints and floats cannot be compared")
