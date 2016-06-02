@@ -33,7 +33,7 @@ and expr =
     | ESEQ of stm * expr
 
 and stm =
-    | MOVE of expr * expr
+    | MOVE of temp * expr
     | EXP of expr
     | JUMP of expr * label list
     | CJUMP of relop * expr * expr * label * label
@@ -230,4 +230,3 @@ and translate_declExpr decl loc_env type_env del =
 
 and translate_block block loc_env type_env del =
     I_CONST 1
-
