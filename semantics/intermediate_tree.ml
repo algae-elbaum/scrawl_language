@@ -31,7 +31,7 @@ and expr =
     | ESEQ of stm * expr
 
 and stm =
-    | MOVE of expr * expr
+    | MOVE of temp * expr
     | EXP of expr
     | JUMP of expr * label list
     | CJUMP of relop * expr * expr * label * label
@@ -208,3 +208,4 @@ and translate_declExpr decl loc_env type_env del =
     | ArrDecl {arr_type; ident; pos} -> 
     | FuncDecl {func_type; ident; params; body; pos} ->
 *)
+
