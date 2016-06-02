@@ -39,12 +39,13 @@ let type_bad_test () =
          "Argument does not match parameter type.";
          "Not enough arguments in function call.";
          "Too many arguments in function call.";
-         "Type int does not match type int[5][6] in assignment.";
-         "Type int does not match type int[5] in assignment.";
-         "Type int[6] does not match type int[5] in assignment.";
+         "Type int does not match type int[7][5][6] in assignment.";
+         "Type int does not match type int[7][5] in assignment.";
+         "Type int[5][6] does not match type int[7][5] in assignment.";
          "Type float does not match type int in assignment.";
          "Non integer index into array.";
          "Indexing into non array type.";
+         "Type int does not match type int[7] in assignment.";
          "Condition of if statement does not have type bool.";
          "Comparison with type none.";
          "Condition of for/while statement does not have type bool.";

@@ -382,3 +382,7 @@ and extract_pos_decl decl =
     | ArrDecl {arr_type; ident; pos} -> pos
     | FuncDecl {func_type; ident; params; body; pos} -> pos
 
+let rec ident_of_var = function 
+    | SimpleVar {ident; _} -> ident
+    | ArrayVar {arr; idx; _} -> ident_of_var arr
+

@@ -91,7 +91,10 @@ and chk_Expr xpr env del errs =
         Stack.push "*" !del; (* Start a new scope *)
         chk_paramList params env del errs; (* Adds each param to the env *)
         let returned = chk_ExprList body env del errs in
-        let ScrawlFuncType {param_types; ret_type} = func_type in
+        let ret_type = match func_type with
+            | ScrawlFuncType {param_types; ret_type} -> ret_type
+            | _ -> raise (Invalid_argument "Type of lambda is not function type. (Compiler bug)")
+        in
         if (ret_type <> returned)
             then
                 errs := ("Returned type " ^ (string_of_type returned) 
@@ -268,7 +271,10 @@ and chk_declExpr d env del errs =
         Stack.push "*" !del; (* Start a new scope *)
         chk_paramList params env del errs; (* Adds each param to the env *)
         let returned = chk_ExprList body env del errs in
-        let ScrawlFuncType {param_types; ret_type} = func_type in
+        let ret_type = match func_type with
+            | ScrawlFuncType {param_types; ret_type} -> ret_type
+            | _ -> raise (Invalid_argument "Type of lambda is not function type. (Compiler bug)")
+        in
         if (body <> [] && ret_type <> returned)
             then
                 errs := ("Returned type " ^ (string_of_type returned) 

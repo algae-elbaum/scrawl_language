@@ -1,0 +1,29 @@
+int a;
+a = 5;
+while (true)
+{
+    float b;
+    b = 5;
+
+    int i;
+    for (i = 0; i < 5; i = i + 1)
+    {
+        i = 10;
+        fun lamb (int param1, string param2) -> int;
+        lamb = fun (int param1, string param2) -> int
+        {
+            return param1;
+        };
+        lamb(31, "asdfasfd");
+        a = 2;
+        
+        fun lumber (int par1, string par2) -> string
+        {
+            par1 = 7;
+            return par2;
+            par1 = par1 = 5;
+        };
+        i = 10;
+    };
+};
+a = 8;

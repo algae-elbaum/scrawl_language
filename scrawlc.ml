@@ -32,6 +32,7 @@ let () =
     let filename = Sys.argv.(1) in
     let ast = get_ast filename in
     if ast <> Abstract_syntax.AST [] then
+    begin
     let simpler_ast = Simplifications.simplify ast in
     let type_and_scope_errs = Type_and_scope_checking.chk_type_and_scope simpler_ast in
     if type_and_scope_errs <> [] then
@@ -42,5 +43,6 @@ let () =
         end;
     Printf.printf "Here's the pretty printed result of parsing the given file:\n";
     Printf.printf "%s\n\n" (Abstract_syntax.prettyPrint_Tree ast);
-
-    Printf.printf "TODO more compiling"
+    let intrm = Intermediate_tree.intermediate_of_ast simpler_ast in
+    Printf.printf "TODO run the interpreter\n"
+    end
