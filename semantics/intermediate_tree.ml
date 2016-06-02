@@ -8,10 +8,25 @@ type intermediate_tree = INTRM_TREE of expr list
 and expr =
     | I_CONST of int
     | F_CONST of float
+    (* See below for what labels and temps are *)
     | NAME of label
     | TEMP of temp
     | BINOP of binop * expr * expr
+    (*  My understanding of MEM is that it is supposed to be effectively a dereference for a temp
+        that refers to a memory location. So if (TEMP a) is the temp associated with an array,
+        then (MEM a) is the first element of the array *)
     | MEM of expr
+    (*  The int in ALLOC_MEM is the number of words the temp will need if written to memory.
+        I'm having trouble understanding how the book wants to do this, since the book doesn't
+        have an ALLOC_MEM. The book seems to maintain in parallel a frame data structure. This
+        here feels simpler and clearer, especially since at this point we're aiming for having
+        an interpreter for this tree, rather than compiling all the way to x86. The idea for
+        this is that the interpreter would maintain an environment similar to the ones maintained
+        here. Upon ALLOC_MEM it would make some storage somehow, and the environment would map
+        temps to their storage. (Compiling to x86 would do essentially the same thing and probably
+        have an easier time of it) *)
+    | ALLOC_MEM of temp * int
+    (* CALL of func * args. I think the func should only ever be a NAME or a TEMP, but TODO make sure *)
     | CALL of expr * expr list
     | ESEQ of stm * expr
 
@@ -34,8 +49,10 @@ and relop =
 (* As far as I can tell, labels and temps are only meant to be UIDs, and it's
    the responsibility of later parts of the compiler to associate them with the
    actual things in memory to which they refer *)
+(* A label identifies a location in the code that can be jumped to *)
 and label = int
 
+(* A temp identifies a variable. *)
 and temp = int
 
 (** For generating unique labels *)
@@ -59,9 +76,11 @@ let int_of_bool b =
 
 (** Add a new ident to the environments *)
 let add_ident ident ident_type loc_env type_env del =
-    Hashtbl.add !loc_env ident (new_temp  ());
+    let n_temp = new_temp () in
+    Hashtbl.add !loc_env ident n_temp;
     Hashtbl.add !type_env ident ident_type;
-    Stack.push ident !del
+    Stack.push ident !del;
+    n_temp
 
 (** Rewind the loc_env type_environment to immediately before it entered the current level of
     scoping. Raises Empty when at global scope. (So don't use it at global scope.
@@ -103,8 +122,8 @@ and translate_ExprList expr_list loc_env type_env del =
 
 and translate_Expr exp loc_env type_env del =
     match exp with
-    | Abstract_syntax.VarExpr var -> translate_varExpr var loc_env type_env del
-    | Abstract_syntax.DeclExpr decl -> I_CONST 1
+    | Abstract_syntax.VarExpr var -> I_CONST 1 (*translate_varExpr var loc_env type_env del *)
+    | Abstract_syntax.DeclExpr decl -> I_CONST 1 (*translate_declExpr decl loc_env type_env del*)
     | Abstract_syntax.AssignExpr {var; value; pos} ->  I_CONST 1
     | Abstract_syntax.LambdaExpr {func_type; params; body; pos} -> 
         begin
@@ -149,36 +168,43 @@ and translate_Expr exp loc_env type_env del =
         raise (Invalid_argument "Translator got AST with for loop (compiler bug)")
     | Abstract_syntax.WhileExpr {cond; body; preface; pos} -> I_CONST 1
     | Abstract_syntax.NoOp -> I_CONST 1
-
+(*
 and translate_varExpr var loc_env type_env del =
     match var with
     | Abstract_syntax.SimpleVar {ident; _} -> Hashtbl.find !loc_env ident (* Return the associated temp *)
-    | Abstract_syntax.ArrayVar _ -> translate_array var loc_env type_env del
+    | Abstract_syntax.ArrayVar _ ->
+        let rec translate_indexing old_arr_loc old_array_type old_arr =
+            match old_arr_type with
+            | Abstract_syntax.ScrawlArrayType {array_type; len; _} ->
+                let (arr, idx) = match old_arr with
+                                      | Abstract_syntax.ArrayVar {arr; idx; _} -> (arr, idx)
+                                      | _ -> raise (Invalid_argument "This should be impossible")
+                in
+                let trans_idx = translate_Expr idx loc_env type_env del in
+                (* Prevent array out of bounds access: *)
+                let in_bound = new_label () in
+                let maybe_in_bound = new_label () in
+                let out_of_bound = new_label () in
+                ESEQ ((seq [CJUMP (LT, trans_idx, I_CONST len, maybe_in_bound, out_of_bound);
+                            LABEL maybe_in_bound;
+                            CJUMP (GE, trans_idx, I_CONST 0, in_bound, out_of_bound);
+                            LABEL out_of_bound;
+                            (* TODO have some mechanism for crashing the program with an error message *)
+                            LABEL in_bound;]),
+                     (* Return the address of the desired element, recursing for multidim accesses *)
+                     (* Array indexing works by adding the index to the *)
+                      BINOP (PLUS, MEM (translate_indexing arr_loc array_type arr), trans_idx)) 
+            | _ -> arr_loc
+        in
+        let arr_ident = Abstract_syntax.ident_of_var var in
+        let arr_type = Hashtbl.find !type_env arr_ident in
+        translate_indexing (Hashtbl.find !loc_env arr_ident) arr_type arr
 
-and translate_array arr loc_env type_env del =
-    let rec translate_indexing arr_loc arr_type a =
-        match arr_type with
-        | Abstract_syntax.ScrawlArrayType {array_type; len; _} ->
-            let (arr, idx) = match a with
-                             | Abstract_syntax.ArrayVar {arr; idx; _} -> (arr, idx)
-                             | _ -> raise (Invalid_argument "This should be impossible")
-            in
-            let trans_idx = translate_Expr idx loc_env type_env del in
-            (* Prevent array out of bounds access: *)
-            let in_bound = new_label () in
-            let maybe_in_bound = new_label () in
-            let out_of_bound = new_label () in
-            ESEQ ((seq [CJUMP (LT, trans_idx, I_CONST len, maybe_in_bound, out_of_bound);
-                        LABEL maybe_in_bound;
-                        CJUMP (GE, trans_idx, I_CONST 0, in_bound, out_of_bound);
-                        LABEL out_of_bound;
-                        (* TODO have some mechanism for crashing the program with an error message *)
-                        LABEL in_bound;]),
-                 (* Return the address of the desired element *)
-                  BINOP (PLUS, translate_indexing arr_loc array_type arr, trans_idx)) 
-        | _ -> arr_loc
-    in
-    let arr_ident = Abstract_syntax.ident_of_var arr in
-    let arr_type = Hashtbl.find !type_env arr_ident in
-    translate_indexing (Hashtbl.find !loc_env arr_ident) arr_type arr
-
+and translate_declExpr decl loc_env type_env del =
+    match decl with
+    (* For simple decls we just make a new temp for the variable  *)
+    | SimpleDecl {var_type; ident; pos} -> add_ident ident var_type loc_env type_env del
+    (* I have no idea how arrays will work *)
+    | ArrDecl {arr_type; ident; pos} -> 
+    | FuncDecl {func_type; ident; params; body; pos} ->
+*)
