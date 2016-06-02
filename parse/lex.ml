@@ -34,6 +34,7 @@ let tokstr = function
   | Parser.FLOAT_T _ -> "FLOAT_T"
   | Parser.BOOL_T _ -> "BOOL_T"
   | Parser.STRING_T _ -> "STRING_T"
+  | Parser.NONE_T _ -> "NONE_T"
 
   | Parser.BAND _ -> "BAND"
   | Parser.BOR  _ -> "BOR"
