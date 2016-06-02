@@ -12,10 +12,9 @@ and expr =
     | NAME of label
     | TEMP of temp
     | BINOP of binop * expr * expr
-    (*  My understanding of MEM is that it is supposed to be effectively a dereference for a temp
-        that refers to a memory location. So if (TEMP a) is the temp associated with an array,
-        then (MEM a) is the first element of the array *)
-    | MEM of expr
+    (* temps map to memory locations (At least for now, at least for the interpreter, we're
+       not doing anything resembling registers). MEM of a temp gives the memory location. *)
+    | MEM of temp
     (*  The int in ALLOC_MEM is the number of words the temp will need if written to memory.
         I'm having trouble understanding how the book wants to do this, since the book doesn't
         have an ALLOC_MEM. The book seems to maintain in parallel a frame data structure. This
@@ -200,25 +199,35 @@ and translate_varExpr var loc_env type_env del =
                         identifies the start of the array (or in the case of multidim indexing,
                         the value that a temp would have if one were assigned to the relevant
                         sub-array) *)
-                      translate_indexing (MEM (BINOP (PLUS, old_arr_loc, trans_idx))) array_type arr)
+
+                     (* TODO fix. Make array declarations first, and make them such that this whole function
+                         only needs to be doing a single index *)
+       (*               translate_indexing (MEM (TEMP (BINOP (PLUS, old_arr_loc, trans_idx)))) array_type arr)*)
+                    I_CONST 1)
             | _ -> old_arr_loc
         in
         let arr_ident = Abstract_syntax.ident_of_var var in
         let arr_type = Hashtbl.find !type_env arr_ident in
-        translate_indexing (MEM (TEMP (Hashtbl.find !loc_env arr_ident))) arr_type var
+(*        translate_indexing (MEM (TEMP (Hashtbl.find !loc_env arr_ident))) arr_type var*)
+        I_CONST 1
 and translate_declExpr decl loc_env type_env del =
     match decl with
     (* For simple decls we just make a new temp for the variable  *)
     | Abstract_syntax.SimpleDecl {var_type; ident; pos} ->
-            let tmp = add_ident ident var_type loc_env type_env del in
-            ALLOC_MEM (tmp, 1)
+        let tmp = add_ident ident var_type loc_env type_env del in
+        ALLOC_MEM (tmp, 1)
     | Abstract_syntax.ArrDecl {arr_type; ident; pos} -> 
-            begin
-                let tmp = add_ident ident arr_type loc_env type_env del in
-                match arr_type with
-                | Abstract_syntax.ScrawlArrayType {array_type; len; _} -> ALLOC_MEM (tmp, len)
-                | _ -> raise (Invalid_argument "This should be impossible")
-            end
+        begin
+            let tmp = add_ident ident arr_type loc_env type_env del in
+            match arr_type with
+            | Abstract_syntax.ScrawlArrayType {array_type; len; _} -> ALLOC_MEM (tmp, len)
+            | _ -> raise (Invalid_argument "This should be impossible")
+        end
     | Abstract_syntax.FuncDecl {func_type; ident; params; body; pos} -> I_CONST 1
-(*            let f_start = new_label () in *)
+       (* let f_start = new_label () in
+        ESEQ
+*)
+
+and translate_block block loc_env type_env del =
+    I_CONST 1
 
