@@ -26,6 +26,9 @@ and expr =
         temps to their storage. (Compiling to x86 would do essentially the same thing and probably
         have an easier time of it) *)
     | ALLOC_MEM of temp * int
+    (* (UNALLOC_MEM n) signals that the last n words of memory are now out of scope and should
+       be unallocated *)
+    | UNALLOC_MEM of int
     (* CALL of func * args. I think the func should only ever be a NAME or a TEMP, but TODO make sure *)
     | CALL of expr * expr list
     | ESEQ of stm * expr
@@ -122,8 +125,8 @@ and translate_ExprList expr_list loc_env type_env del =
 
 and translate_Expr exp loc_env type_env del =
     match exp with
-    | Abstract_syntax.VarExpr var -> I_CONST 1 (*translate_varExpr var loc_env type_env del *)
-    | Abstract_syntax.DeclExpr decl -> I_CONST 1 (*translate_declExpr decl loc_env type_env del*)
+    | Abstract_syntax.VarExpr var -> translate_varExpr var loc_env type_env del
+    | Abstract_syntax.DeclExpr decl -> translate_declExpr decl loc_env type_env del
     | Abstract_syntax.AssignExpr {var; value; pos} ->  I_CONST 1
     | Abstract_syntax.LambdaExpr {func_type; params; body; pos} -> 
         begin
@@ -168,13 +171,14 @@ and translate_Expr exp loc_env type_env del =
         raise (Invalid_argument "Translator got AST with for loop (compiler bug)")
     | Abstract_syntax.WhileExpr {cond; body; preface; pos} -> I_CONST 1
     | Abstract_syntax.NoOp -> I_CONST 1
-(*
+
 and translate_varExpr var loc_env type_env del =
     match var with
-    | Abstract_syntax.SimpleVar {ident; _} -> Hashtbl.find !loc_env ident (* Return the associated temp *)
+    | Abstract_syntax.SimpleVar {ident; _} -> TEMP (Hashtbl.find !loc_env ident) (* Return the associated temp *)
     | Abstract_syntax.ArrayVar _ ->
         let rec translate_indexing old_arr_loc old_array_type old_arr =
-            match old_arr_type with
+            (* old_arr_loc is (MEM t), where t is the temp of the array *)
+            match old_array_type with
             | Abstract_syntax.ScrawlArrayType {array_type; len; _} ->
                 let (arr, idx) = match old_arr with
                                       | Abstract_syntax.ArrayVar {arr; idx; _} -> (arr, idx)
@@ -192,19 +196,29 @@ and translate_varExpr var loc_env type_env del =
                             (* TODO have some mechanism for crashing the program with an error message *)
                             LABEL in_bound;]),
                      (* Return the address of the desired element, recursing for multidim accesses *)
-                     (* Array indexing works by adding the index to the *)
-                      BINOP (PLUS, MEM (translate_indexing arr_loc array_type arr), trans_idx)) 
-            | _ -> arr_loc
+                     (* Array indexing works by adding the index to the value in the temp that
+                        identifies the start of the array (or in the case of multidim indexing,
+                        the value that a temp would have if one were assigned to the relevant
+                        sub-array) *)
+                      translate_indexing (MEM (BINOP (PLUS, old_arr_loc, trans_idx))) array_type arr)
+            | _ -> old_arr_loc
         in
         let arr_ident = Abstract_syntax.ident_of_var var in
         let arr_type = Hashtbl.find !type_env arr_ident in
-        translate_indexing (Hashtbl.find !loc_env arr_ident) arr_type arr
-
+        translate_indexing (MEM (TEMP (Hashtbl.find !loc_env arr_ident))) arr_type var
 and translate_declExpr decl loc_env type_env del =
     match decl with
     (* For simple decls we just make a new temp for the variable  *)
-    | SimpleDecl {var_type; ident; pos} -> add_ident ident var_type loc_env type_env del
-    (* I have no idea how arrays will work *)
-    | ArrDecl {arr_type; ident; pos} -> 
-    | FuncDecl {func_type; ident; params; body; pos} ->
-*)
+    | Abstract_syntax.SimpleDecl {var_type; ident; pos} ->
+            let tmp = add_ident ident var_type loc_env type_env del in
+            ALLOC_MEM (tmp, 1)
+    | Abstract_syntax.ArrDecl {arr_type; ident; pos} -> 
+            begin
+                let tmp = add_ident ident arr_type loc_env type_env del in
+                match arr_type with
+                | Abstract_syntax.ScrawlArrayType {array_type; len; _} -> ALLOC_MEM (tmp, len)
+                | _ -> raise (Invalid_argument "This should be impossible")
+            end
+    | Abstract_syntax.FuncDecl {func_type; ident; params; body; pos} -> I_CONST 1
+(*            let f_start = new_label () in *)
+
