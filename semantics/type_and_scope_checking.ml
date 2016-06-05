@@ -240,7 +240,17 @@ and chk_varExpr v env del errs =
         if (chk_Expr idx env del errs) <> INT
             then
                 errs := ("Non integer index into array." ^ (pos_string pos)) :: !errs;
-        match chk_varExpr arr env del errs with
+        let arr_t = if Hashtbl.mem !env arr
+                        then
+                            Hashtbl.find !env arr
+                        else
+                            begin
+                            errs := ("Variable " ^ arr ^ " undeclared." ^ 
+                                    (pos_string pos)) :: !errs;
+                            NONE
+                            end
+        in
+        match arr_t with
         | NONE -> NONE
         (* Indexing into an array peels off one layer of ScrawlArrayType *)
         | ScrawlArrayType {array_type; len; _} -> array_type

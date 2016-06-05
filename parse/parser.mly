@@ -92,14 +92,14 @@ simple_type:
 
 arr_type:
   (* pos at square brace to differentiate different dimensions *)
-  | scrawl_type LSQUARE INT_LIT RSQUARE 
+  | simple_type LSQUARE INT_LIT RSQUARE
     {Abstract_syntax.ScrawlArrayType {array_type=$1; len=fst $3; pos=$2}}
 
 var:
   | IDENT {Abstract_syntax.SimpleVar {ident=fst $1; pos=snd $1}}  (* SimpleVar *)
   (* pos at square brace to differentiate different dimensions *)
-  | var LSQUARE expr RSQUARE 
-    {Abstract_syntax.ArrayVar {arr=$1; idx=$3; pos=$2}} (* ArrayVar *)
+  | IDENT LSQUARE expr RSQUARE 
+    {Abstract_syntax.ArrayVar {arr=fst $1; idx=$3; pos=$2}} (* ArrayVar *)
 
 decl:
   | simple_type IDENT  (* SimpleDecl *)

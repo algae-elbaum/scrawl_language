@@ -50,3 +50,8 @@ e.g.
     foo();
 
 will print: ab
+
+
+
+Arrays may only be of primitive types. If you want mulitdimensional arrays, simulate them
+yourself

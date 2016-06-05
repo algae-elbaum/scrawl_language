@@ -15,6 +15,9 @@ and expr =
     (* temps map to memory locations (At least for now, at least for the interpreter, we're
        not doing anything resembling registers). MEM of a temp gives the memory location. *)
     | MEM of temp
+    (* MEM_VAL dereferences MEMs. The expr will never not be a a MEM. If t is a temp then
+       (MEM_VAL (MEM t)) should act the same as (TEMP t). *) 
+    | MEM_VAL of expr
     (*  The int in ALLOC_MEM is the number of words the temp will need if written to memory.
         I'm having trouble understanding how the book wants to do this, since the book doesn't
         have an ALLOC_MEM. The book seems to maintain in parallel a frame data structure. This
@@ -33,7 +36,8 @@ and expr =
     | ESEQ of stm * expr
 
 and stm =
-    | MOVE of temp * expr
+    (* The left of MOVE will always either be a temp or a MEM_VAL *)
+    | MOVE of expr * expr
     | EXP of expr
     | JUMP of expr * label list
     | CJUMP of relop * expr * expr * label * label

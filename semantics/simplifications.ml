@@ -65,7 +65,7 @@ and simplify_varExpr v =
     match v with
     | SimpleVar _ -> v
     | ArrayVar {arr; idx; pos} ->
-        ArrayVar {arr = (simplify_varExpr arr);
+        ArrayVar {arr = arr;
                   idx = (simplify_Expr idx);
                   pos}
 

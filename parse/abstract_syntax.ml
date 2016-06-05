@@ -74,7 +74,7 @@ and var_expr =
     | SimpleVar of {ident: string;
                     pos: pos}
 
-    | ArrayVar of {arr: var_expr;
+    | ArrayVar of {arr: string;
                    idx: expr;
                    pos: pos}
 and decl = 
@@ -124,7 +124,7 @@ and comp_varExpr v1 v2 =
     match v1, v2 with
     | SimpleVar {ident = i1; _}, SimpleVar {ident = i2; _} -> i1 = i2
     | ArrayVar {arr = a1; idx = i1; _}, ArrayVar {arr = a2; idx = i2; _} -> 
-        (comp_varExpr a1 a2) && (comp_Expr i1 i2) 
+        (a1 = a2) && (comp_Expr i1 i2) 
     | _, _ -> false
 
 and comp_ScrawlType q1 q2 =
@@ -218,7 +218,7 @@ and comp_ArgList lst1 lst2 =
 let rec prettyPrint_varExpr v =
     match v with
     | SimpleVar {ident; _} -> ident
-    | ArrayVar {arr; idx; _} -> (prettyPrint_varExpr arr) ^ (prettyPrint_Expr idx) 
+    | ArrayVar {arr; idx; _} -> (arr) ^ "["  ^ (prettyPrint_Expr idx) ^ "]"
 
 and prettyPrint_ScrawlType q =
     match q with
@@ -384,5 +384,5 @@ and extract_pos_decl decl =
 
 let rec ident_of_var = function 
     | SimpleVar {ident; _} -> ident
-    | ArrayVar {arr; idx; _} -> ident_of_var arr
+    | ArrayVar {arr; idx; _} -> arr
 

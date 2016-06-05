@@ -8,7 +8,7 @@ fun funcdecldef (string a) -> string
 {
     return ret;
 };
-fun (int param) -> string[3][2] {};
+//fun (int param) -> string[3][2] {};
 assign = 4;
 assign = assignval;
 123;
