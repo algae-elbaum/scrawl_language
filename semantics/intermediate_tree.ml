@@ -1,4 +1,5 @@
 
+
 (** The intermediate representation of the language, to be a stepping stone
     between the AST and machine code. In practice since we are running out of
     time, this will the the final form of the code, and we'll make an
@@ -134,19 +135,21 @@ and translate_Expr exp loc_env type_env del =
     | Abstract_syntax.VarExpr var -> translate_varExpr var loc_env type_env del
     | Abstract_syntax.DeclExpr decl -> translate_declExpr decl loc_env type_env del
     | Abstract_syntax.AssignExpr {var; value; pos} ->  I_CONST 1
-    | Abstract_syntax.LambdaExpr {func_type; params; body; pos} -> 
-        begin
-        Stack.push "*" !del; (* Start a new scope *)
-        rewind_env loc_env type_env del;
-        I_CONST 1
-        end
+    | Abstract_syntax.LambdaExpr {func_type; params; body; _} ->
+        let f_start = new_label () in
+        let param_idents = List.map (fun (Abstract_syntax.QualIdent {ident = i}) -> i) params in
+        let t_body = translate_block body param_idents true loc_env type_env del in
+        ESEQ (seq [LABEL f_start;
+                   t_body], 
+              NAME f_start)
+
     | Abstract_syntax.ReturnExpr x -> I_CONST 1
     | Abstract_syntax.IntLitExpr {value; _} -> I_CONST value
     | Abstract_syntax.FloatLitExpr {value; _} -> F_CONST value
-    (* Strings are not supported yet an will not be supported by the end of term *)
+    (* Strings are not supported yet and will not be supported by the end of term *)
     | Abstract_syntax.StringLitExpr {value; _} -> I_CONST 1 (* Strings to be treated similar to arrays *)
     | Abstract_syntax.BoolLitExpr {value; _} -> I_CONST (int_of_bool value)
-    | Abstract_syntax.FuncCallExpr {func; args; _} -> I_CONST 1
+    | Abstract_syntax.FuncCallExpr {func; args; _} -> I_CONST 1 (* TODO *)
     | Abstract_syntax.BinOpExpr {op; argl; argr; _} -> 
         begin
             let (t_argl, t_argr) = (translate_Expr argl loc_env type_env del,
@@ -174,7 +177,7 @@ and translate_Expr exp loc_env type_env del =
             |Abstract_syntax.GREATER -> rel_expr GT t_argl t_argr
         end
 
-    | Abstract_syntax.UnOpExpr {op; arg; pos} ->
+    | Abstract_syntax.UnOpExpr {op; arg; _} ->
         begin
             let t_arg = translate_Expr arg loc_env type_env del in
             match op with
@@ -184,10 +187,39 @@ and translate_Expr exp loc_env type_env del =
             | Abstract_syntax.UMINUS -> BINOP (MINUS, I_CONST 0, t_arg)
         end
 
-    | Abstract_syntax.IfExpr {cond; body;  else_expr; pos} ->  I_CONST 1
+    | Abstract_syntax.IfExpr {cond; body; else_expr; _} ->
+        let t_cond = translate_Expr cond loc_env type_env del in
+        let t_body = translate_block body [] false loc_env type_env del in
+        let t_else = translate_block else_expr [] false loc_env type_env del in
+        let t = new_label () in
+        let f = new_label () in
+        let e = new_label () in
+        ESEQ ((seq [CJUMP (EQ, I_CONST 1, t_cond, t, f);
+                    LABEL t;
+                    t_body;
+                    JUMP (NAME e);
+                    LABEL f;
+                    t_else;
+                    LABEL e;]),
+             (* This next line is a hack to get ifs to act like exprs. Might work out a better solution *)
+             (I_CONST 1))
     | Abstract_syntax.ForExpr _  -> 
         raise (Invalid_argument "Translator got AST with for loop (compiler bug)")
-    | Abstract_syntax.WhileExpr {cond; body; preface; pos} -> I_CONST 1
+    | Abstract_syntax.WhileExpr {cond; body; preface; _} ->
+        let t_preface = translate_Expr preface loc_env type_env del in
+        let t_cond = translate_Expr cond loc_env type_env del in
+        let t_body = translate_block body [] false loc_env type_env del in
+        let c = new_label () in
+        let e = new_label () in
+        ESEQ ((seq [EXP t_preface;
+                    CJUMP (EQ, I_CONST 1, t_cond, c, e);
+                    LABEL c;
+                    t_body;
+                    CJUMP (EQ, I_CONST 1, t_cond, c, e);
+                    LABEL e;]),
+             (* This next line is a hack to get whiles to act like exprs. Might work out a better solution *)
+             (I_CONST 1))
+
     | Abstract_syntax.NoOp -> I_CONST 1
 
 and translate_varExpr var loc_env type_env del =
@@ -231,10 +263,13 @@ and translate_declExpr decl loc_env type_env del =
                 | Abstract_syntax.ScrawlArrayType {array_type; len; _} -> ALLOC_MEM (tmp, len)
                 | _ -> raise (Invalid_argument "This should be impossible")
         end
-    | Abstract_syntax.FuncDecl {func_type; ident; params; body; pos} -> I_CONST 1
-       (* let f_start = new_label () in
-        ESEQ
-*)
+    | Abstract_syntax.FuncDecl {func_type; ident; params; body; pos} ->
+        let f_start = new_label () in
+        let param_idents = List.map (fun (Abstract_syntax.QualIdent {ident = i}) -> i) params in
+        let t_body = translate_block body param_idents true loc_env type_env del in
+        ESEQ (seq [LABEL f_start;
+                   t_body], 
+              NAME f_start)
 
 and rel_expr op argl argr =
     let t = new_label () in
@@ -251,5 +286,12 @@ and rel_expr op argl argr =
                 LABEL e;]),
           (TEMP res))
 
-and translate_block block loc_env type_env del =
-    I_CONST 1
+and translate_block block args is_func loc_env type_env del =
+    (* fetch each arg from the arg register before executing *)
+    begin
+    Stack.push "*" !del; (* Start a new scope *)
+    (* TODO *)
+    rewind_env loc_env type_env del;
+    LABEL 1
+    end
+
