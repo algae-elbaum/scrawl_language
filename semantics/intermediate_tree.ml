@@ -15,9 +15,11 @@ and expr =
     (* temps map to memory locations (At least for now, at least for the interpreter, we're
        not doing anything resembling registers). MEM of a temp gives the memory location. *)
     | MEM of temp
-    (* MEM_VAL dereferences MEMs. The expr will never not be a a MEM. If t is a temp then
-       (MEM_VAL (MEM t)) should act the same as (TEMP t). *) 
-    | MEM_VAL of expr
+    (*  MEM_TEMP dereferences MEMs. The expr will never not be a a MEM. If t is a temp then
+        (MEM_TEMP (MEM t)) should act the same as (TEMP t). The idea is that 
+        (MEM_TEMP (PLUS (MEM t) e)) should be able to act as a temp for the memory slot e
+        slots down from (MEM t). This is for arrays and strings. *) 
+    | MEM_TEMP of expr
     (*  The int in ALLOC_MEM is the number of words the temp will need if written to memory.
         I'm having trouble understanding how the book wants to do this, since the book doesn't
         have an ALLOC_MEM. The book seems to maintain in parallel a frame data structure. This
@@ -178,54 +180,43 @@ and translate_Expr exp loc_env type_env del =
 and translate_varExpr var loc_env type_env del =
     match var with
     | Abstract_syntax.SimpleVar {ident; _} -> TEMP (Hashtbl.find !loc_env ident) (* Return the associated temp *)
-    | Abstract_syntax.ArrayVar _ ->
-        let rec translate_indexing old_arr_loc old_array_type old_arr =
-            (* old_arr_loc is (MEM t), where t is the temp of the array *)
-            match old_array_type with
-            | Abstract_syntax.ScrawlArrayType {array_type; len; _} ->
-                let (arr, idx) = match old_arr with
-                                      | Abstract_syntax.ArrayVar {arr; idx; _} -> (arr, idx)
-                                      | _ -> raise (Invalid_argument "This should be impossible")
-                in
-                let trans_idx = translate_Expr idx loc_env type_env del in
-                (* Prevent array out of bounds access: *)
-                let in_bound = new_label () in
-                let maybe_in_bound = new_label () in
-                let out_of_bound = new_label () in
-                ESEQ ((seq [CJUMP (LT, trans_idx, I_CONST len, maybe_in_bound, out_of_bound);
-                            LABEL maybe_in_bound;
-                            CJUMP (GE, trans_idx, I_CONST 0, in_bound, out_of_bound);
-                            LABEL out_of_bound;
-                            (* TODO have some mechanism for crashing the program with an error message *)
-                            LABEL in_bound;]),
-                     (* Return the address of the desired element, recursing for multidim accesses *)
-                     (* Array indexing works by adding the index to the value in the temp that
-                        identifies the start of the array (or in the case of multidim indexing,
-                        the value that a temp would have if one were assigned to the relevant
-                        sub-array) *)
+    | Abstract_syntax.ArrayVar {arr; idx; _} ->
+        let arr_type = Hashtbl.find !type_env arr in
+        match arr_type with
+        | Abstract_syntax.ScrawlArrayType {array_type; len; _} ->
+            let trans_idx = translate_Expr idx loc_env type_env del in
+            let arr_temp = Hashtbl.find !loc_env arr in
+            (* Prevent array out of bounds access: *)
+            let in_bound = new_label () in
+            let maybe_in_bound = new_label () in
+            let out_of_bound = new_label () in
+            ESEQ ((seq [CJUMP (LT, trans_idx, I_CONST len, maybe_in_bound, out_of_bound);
+                        LABEL maybe_in_bound;
+                        CJUMP (GE, trans_idx, I_CONST 0, in_bound, out_of_bound);
+                        LABEL out_of_bound;
+                        (* TODO have some mechanism for crashing the program with an error message *)
+                        LABEL in_bound;]),
+                  (* Return the (MEM_VAL (MEM _)) of the desired element *)
+                  (* Array indexing works by adding the index to the value in the temp that
+                     identifies the start of the array (or in the case of multidim indexing,
+                     the value that a temp would have if one were assigned to the relevant
+                     sub-array) *)
+                  (MEM_TEMP (BINOP (PLUS, (MEM arr_temp), trans_idx))))
+        | _ -> raise (Invalid_argument "This should be impossible")
 
-                     (* TODO fix. Make array declarations first, and make them such that this whole function
-                         only needs to be doing a single index *)
-       (*               translate_indexing (MEM (TEMP (BINOP (PLUS, old_arr_loc, trans_idx)))) array_type arr)*)
-                    I_CONST 1)
-            | _ -> old_arr_loc
-        in
-        let arr_ident = Abstract_syntax.ident_of_var var in
-        let arr_type = Hashtbl.find !type_env arr_ident in
-(*        translate_indexing (MEM (TEMP (Hashtbl.find !loc_env arr_ident))) arr_type var*)
-        I_CONST 1
 and translate_declExpr decl loc_env type_env del =
     match decl with
     (* For simple decls we just make a new temp for the variable  *)
     | Abstract_syntax.SimpleDecl {var_type; ident; pos} ->
         let tmp = add_ident ident var_type loc_env type_env del in
         ALLOC_MEM (tmp, 1)
-    | Abstract_syntax.ArrDecl {arr_type; ident; pos} -> 
+    | Abstract_syntax.ArrDecl {arr_type; ident; pos} ->
+        (* !!!Arrays are only single dimensional!!! *)
         begin
             let tmp = add_ident ident arr_type loc_env type_env del in
             match arr_type with
-            | Abstract_syntax.ScrawlArrayType {array_type; len; _} -> ALLOC_MEM (tmp, len)
-            | _ -> raise (Invalid_argument "This should be impossible")
+                | Abstract_syntax.ScrawlArrayType {array_type; len; _} -> ALLOC_MEM (tmp, len)
+                | _ -> raise (Invalid_argument "This should be impossible")
         end
     | Abstract_syntax.FuncDecl {func_type; ident; params; body; pos} -> I_CONST 1
        (* let f_start = new_label () in
