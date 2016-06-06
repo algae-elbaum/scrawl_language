@@ -174,7 +174,15 @@ and translate_Expr exp loc_env type_env del =
             |Abstract_syntax.GREATER -> rel_expr GT t_argl t_argr
         end
 
-    | Abstract_syntax.UnOpExpr {op; arg; pos} -> I_CONST 1
+    | Abstract_syntax.UnOpExpr {op; arg; pos} ->
+        begin
+            let t_arg = translate_Expr arg loc_env type_env del in
+            match op with
+            | Abstract_syntax.BNOT -> BINOP (BXOR, I_CONST 1, t_arg)
+            (* LNOT works since translation turns binary values into 0 or 1 *)
+            | Abstract_syntax.LNOT -> rel_expr EQ (I_CONST 0) t_arg
+            | Abstract_syntax.UMINUS -> BINOP (MINUS, I_CONST 0, t_arg)
+        end
 
     | Abstract_syntax.IfExpr {cond; body;  else_expr; pos} ->  I_CONST 1
     | Abstract_syntax.ForExpr _  -> 
