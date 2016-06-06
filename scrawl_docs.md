@@ -56,3 +56,5 @@ Arrays may only be of primitive types. If you want mulitdimensional arrays, simu
 yourself
     
 Strings are not supported yet an will not be supported by the end of term
+
+Functions are entirely pass by reference

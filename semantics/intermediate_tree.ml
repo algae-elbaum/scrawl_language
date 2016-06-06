@@ -11,15 +11,21 @@ and expr =
     | F_CONST of float
     (* See below for what labels and temps are *)
     | NAME of label
+    (*  TEMP acts as a variable. Each temp t should map to a memory location (or simulated
+        memory location in the case of the interpreter), and then (TEMP t) represents the
+        contents of that location. *)
     | TEMP of temp
     | BINOP of binop * expr * expr
     (* temps map to memory locations (At least for now, at least for the interpreter, we're
        not doing anything resembling registers). MEM of a temp gives the memory location. *)
     | MEM of temp
-    (*  MEM_TEMP dereferences MEMs. The expr will never not be a a MEM. If t is a temp then
-        (MEM_TEMP (MEM t)) should act the same as (TEMP t). The idea is that 
-        (MEM_TEMP (PLUS (MEM t) e)) should be able to act as a temp for the memory slot e
-        slots down from (MEM t). This is for arrays and strings. *) 
+    (*  MEM_TEMP dereferences MEMs. If t is a temp then (MEM_TEMP (MEM t)) should act the
+        same as (TEMP t). The idea is that (MEM_TEMP (PLUS (MEM t) e)) should be able to
+        act exactly like a temp for the memory slot e slots down from (MEM t). This should
+        work even with multiple layers, ie (MEM_TEMP (MEM (MEM_TEMP (MEM t)))) should still
+        act just the same as (TEMP t). Another case that should work is that after
+        MOVE(a, MEM (t)), (MEM_TEMP a) should also act like (TEMP t). This is for arrays to
+        work nicely. *) 
     | MEM_TEMP of expr
     (*  The int in ALLOC_MEM is the number of words the temp will need if written to memory.
         I'm having trouble understanding how the book wants to do this, since the book doesn't
@@ -39,13 +45,20 @@ and expr =
     | ESEQ of stm * expr
 
 and stm =
-    (* The left of MOVE will always either be a temp or a MEM_VAL *)
+    (* The left of MOVE will always either be a TEMP or a MEM_TEMP *)
     | MOVE of expr * expr
+    (* The right hand side of COPY will always evaluate to an integer value, where the value is that
+       of a temp that has already been defined. The result of a COPY should be that the left hand temp
+       will act in every way like the right hand temp. I expect that this should be implemented by
+       just setting the temp on the left to map to the same thing that the temp on the right does. *)
+    | COPY of temp * expr
     | EXP of expr
-    (* JUMP's expr will only ever be a NAME or a TEMP *)
+    (* JUMP's expr will only ever be a NAME or a TEMP. If it's a temp, it will be a temp which has had
+       (NAME ___) moved into it *)
     | JUMP of expr
     | CJUMP of relop * expr * expr * label * label
     | SEQ of stm * stm
+    (* A label declared a label that may be JUMPed or CJUMPed to later *)
     | LABEL of label
 
 and binop = 
@@ -73,8 +86,19 @@ let new_label () =
     !label_count
     end
 
+(* Predefined temps: *)
+
+(* At the time of a function call this must be set to an array of values. Those
+   values will be taken as the TEMPs of the args to the function. This is to make
+   passing arrays as arguments more feasible *)
+let arg_temp = 0 
+
+(* At the time of a function call, this must be set to the label to which the function
+   will return *)
+let ret_temp = 1
+
 (** For generating unique temps *)
-let temp_count = ref 0
+let temp_count = ref 2
 let new_temp () =
     begin
     temp_count := !temp_count + 1;
@@ -92,17 +116,6 @@ let add_ident ident ident_type loc_env type_env del =
     Stack.push ident !del;
     n_temp
 
-(** Rewind the loc_env type_environment to immediately before it entered the current level of
-    scoping. Raises Empty when at global scope. (So don't use it at global scope.
-    There should be no reason to do so) *)
-let rec rewind_env loc_env type_env del =
-    match (Stack.pop !del) with
-    | "*" -> () (* A star denotes the beginning of a new scope *)
-    | s -> begin
-           Hashtbl.remove !loc_env s;
-           Hashtbl.remove !type_env s;
-           rewind_env loc_env type_env del;
-           end
 
 (* Turn a list of stms into a SEQ *)
 let rec seq lst =
@@ -137,8 +150,7 @@ and translate_Expr exp loc_env type_env del =
     | Abstract_syntax.AssignExpr {var; value; pos} ->  I_CONST 1
     | Abstract_syntax.LambdaExpr {func_type; params; body; _} ->
         let f_start = new_label () in
-        let param_idents = List.map (fun (Abstract_syntax.QualIdent {ident = i}) -> i) params in
-        let t_body = translate_block body param_idents true loc_env type_env del in
+        let t_body = translate_block body params true loc_env type_env del in
         ESEQ (seq [LABEL f_start;
                    t_body], 
               NAME f_start)
@@ -265,8 +277,7 @@ and translate_declExpr decl loc_env type_env del =
         end
     | Abstract_syntax.FuncDecl {func_type; ident; params; body; pos} ->
         let f_start = new_label () in
-        let param_idents = List.map (fun (Abstract_syntax.QualIdent {ident = i}) -> i) params in
-        let t_body = translate_block body param_idents true loc_env type_env del in
+        let t_body = translate_block body params true loc_env type_env del in
         ESEQ (seq [LABEL f_start;
                    t_body], 
               NAME f_start)
@@ -287,11 +298,31 @@ and rel_expr op argl argr =
           (TEMP res))
 
 and translate_block block args is_func loc_env type_env del =
-    (* fetch each arg from the arg register before executing *)
     begin
-    Stack.push "*" !del; (* Start a new scope *)
+    (* Start a new scope *)
+    Stack.push "*" !del; 
+    (* fetch each arg from the arg register before executing *)
+    let fetch_args = 
+        seq (List.mapi (fun i (Abstract_syntax.QualIdent {ident_type; ident; _}) ->
+                                let n_temp = add_ident ident ident_type loc_env type_env del in
+                                 COPY (n_temp, (MEM_TEMP (BINOP (PLUS, (MEM arg_temp), I_CONST i)))))
+                       args)
+    in
     (* TODO *)
     rewind_env loc_env type_env del;
     LABEL 1
     end
+
+(** Rewind the loc_env type_environment to immediately before it entered the current level of
+    scoping. Raises Empty when at global scope. (So don't use it at global scope.
+    There should be no reason to do so) *)
+and rewind_env loc_env type_env del =
+    match (Stack.pop !del) with
+    | "*" -> () (* A star denotes the beginning of a new scope *)
+    | s -> begin
+           Hashtbl.remove !loc_env s;
+           Hashtbl.remove !type_env s;
+           rewind_env loc_env type_env del;
+           end
+
 
