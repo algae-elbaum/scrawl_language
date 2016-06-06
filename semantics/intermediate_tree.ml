@@ -41,7 +41,8 @@ and stm =
     (* The left of MOVE will always either be a temp or a MEM_VAL *)
     | MOVE of expr * expr
     | EXP of expr
-    | JUMP of expr * label list
+    (* JUMP's expr will only ever be a NAME or a TEMP *)
+    | JUMP of expr
     | CJUMP of relop * expr * expr * label * label
     | SEQ of stm * stm
     | LABEL of label
@@ -142,31 +143,35 @@ and translate_Expr exp loc_env type_env del =
     | Abstract_syntax.ReturnExpr x -> I_CONST 1
     | Abstract_syntax.IntLitExpr {value; _} -> I_CONST value
     | Abstract_syntax.FloatLitExpr {value; _} -> F_CONST value
+    (* Strings are not supported yet an will not be supported by the end of term *)
     | Abstract_syntax.StringLitExpr {value; _} -> I_CONST 1 (* Strings to be treated similar to arrays *)
     | Abstract_syntax.BoolLitExpr {value; _} -> I_CONST (int_of_bool value)
-    | Abstract_syntax.FuncCallExpr {func; args; pos} -> I_CONST 1
-    | Abstract_syntax.BinOpExpr {op; argl; argr; pos} -> 
+    | Abstract_syntax.FuncCallExpr {func; args; _} -> I_CONST 1
+    | Abstract_syntax.BinOpExpr {op; argl; argr; _} -> 
         begin
-        match op with
-        |Abstract_syntax.BAND -> I_CONST 1
-        |Abstract_syntax.BOR -> I_CONST 1
-        |Abstract_syntax.BXOR -> I_CONST 1
-        |Abstract_syntax.BLEFT -> I_CONST 1
-        |Abstract_syntax.BRIGHT -> I_CONST 1
-        |Abstract_syntax.LAND -> I_CONST 1
-        |Abstract_syntax.LOR -> I_CONST 1
-        |Abstract_syntax.LXNOR -> I_CONST 1
-        |Abstract_syntax.LXAND -> I_CONST 1
-        |Abstract_syntax.LXNAND -> I_CONST 1
-        |Abstract_syntax.EQ -> I_CONST 1
-        |Abstract_syntax.LESS -> I_CONST 1
-        |Abstract_syntax.GREATER -> I_CONST 1
-        |Abstract_syntax.PLUS -> I_CONST 1
-        |Abstract_syntax.MINUS -> I_CONST 1
-        |Abstract_syntax.TIMES -> I_CONST 1
-        |Abstract_syntax.DIV -> I_CONST 1
-        |Abstract_syntax.MOD -> I_CONST 1
-        |Abstract_syntax.POW -> I_CONST 1
+            let (t_argl, t_argr) = (translate_Expr argl loc_env type_env del,
+                                    translate_Expr argr loc_env type_env del) in
+            match op with
+            |Abstract_syntax.BAND -> BINOP(BAND, t_argr, t_argl)
+            |Abstract_syntax.BOR -> BINOP (BOR, t_argr, t_argl)
+            |Abstract_syntax.BXOR -> BINOP (BXOR, t_argr, t_argl)
+            |Abstract_syntax.BLEFT -> BINOP (BLEFT, t_argr, t_argl)
+            |Abstract_syntax.BRIGHT -> BINOP (BRIGHT, t_argr, t_argl)
+            |Abstract_syntax.LAND -> BINOP (LAND, t_argr, t_argl)
+            |Abstract_syntax.LOR -> BINOP (LOR, t_argr, t_argl)
+            |Abstract_syntax.LXNOR -> BINOP (LXNOR, t_argr, t_argl)
+            |Abstract_syntax.LXAND -> BINOP (LXAND, t_argr, t_argl)
+            |Abstract_syntax.LXNAND -> BINOP (LXNAND, t_argr, t_argl)
+            |Abstract_syntax.PLUS -> BINOP (PLUS, t_argr, t_argl)
+            |Abstract_syntax.MINUS -> BINOP (MINUS, t_argr, t_argl)
+            |Abstract_syntax.TIMES -> BINOP (TIMES, t_argr, t_argl)
+            |Abstract_syntax.DIV -> BINOP (DIV, t_argr, t_argl)
+            |Abstract_syntax.MOD -> BINOP (MOD, t_argr, t_argl)
+            |Abstract_syntax.POW -> BINOP (POW, t_argr, t_argl)
+
+            |Abstract_syntax.EQ -> rel_expr EQ t_argl t_argr
+            |Abstract_syntax.LESS -> rel_expr LT t_argl t_argr
+            |Abstract_syntax.GREATER -> rel_expr GT t_argl t_argr
         end
 
     | Abstract_syntax.UnOpExpr {op; arg; pos} -> I_CONST 1
@@ -222,6 +227,21 @@ and translate_declExpr decl loc_env type_env del =
        (* let f_start = new_label () in
         ESEQ
 *)
+
+and rel_expr op argl argr =
+    let t = new_label () in
+    let f = new_label () in
+    let e = new_label () in
+    let res = new_temp () in
+    ESEQ ((seq [EXP (ALLOC_MEM (res, 1));
+                CJUMP (op, argl, argr, t, f);
+                LABEL t;
+                MOVE (TEMP res, I_CONST 1);
+                JUMP (NAME e);
+                LABEL f;
+                MOVE (TEMP res, I_CONST 0);
+                LABEL e;]),
+          (TEMP res))
 
 and translate_block block loc_env type_env del =
     I_CONST 1

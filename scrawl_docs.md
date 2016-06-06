@@ -52,6 +52,7 @@ e.g.
 will print: ab
 
 
-
 Arrays may only be of primitive types. If you want mulitdimensional arrays, simulate them
 yourself
+    
+Strings are not supported yet an will not be supported by the end of term
