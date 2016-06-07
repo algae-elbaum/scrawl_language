@@ -25,23 +25,25 @@ and expr =
         work even with multiple layers, ie (MEM_TEMP (MEM (MEM_TEMP (MEM t)))) should still
         act just the same as (TEMP t). This is for arrays to work nicely. *) 
     | MEM_TEMP of expr
-    (* CALL of func * args. I think the func should only ever be a NAME or a TEMP, but TODO make sure *)
-    | CALL of expr * expr list
     | ESEQ of stm * expr
 
 and stm =
-    (* The left of MOVE will always either be a TEMP or a MEM_TEMP *)
+    (* The left of MOVE will always either be a TEMP, a MEM_TEMP, or a NAME. When it is a NAME
+       the right will also be a NAME, and the left NAME should be set to act as an alias for the
+       right NAME *)
     | MOVE of expr * expr
-    (* The right hand side of COPY will always evaluate to an integer value, where the value is that
-       of a temp that has already been defined. The result of a COPY should be that the left hand temp
-       will act in every way like the right hand temp. I expect that this should be implemented by
-       just setting the temp on the left to map to the same thing that the temp on the right does. *)
+    (*  The right hand side of COPY will always evaluate to an integer value, where the value is that
+        of a temp that has already been defined. The result of a COPY should be that the left hand temp
+        will act in every way like the right hand temp. I expect that this should be implemented by
+        just setting the temp on the left to map to the same thing that the temp on the right does. *)
     | COPY of temp * expr
     | EXP of expr
     (* JUMP's expr will only ever be a NAME or a TEMP. If it's a temp, it will be a temp which has had
        (NAME ___) moved into it *)
     | JUMP of expr
     | CJUMP of relop * expr * expr * label * label
+    (* CALL of func * args. The func will only ever be a NAME *)
+    | CALL of expr * expr list
     | SEQ of stm * stm
     (* A label declared a label that may be JUMPed or CJUMPed to later *)
     | LABEL of label
@@ -68,9 +70,6 @@ and binop =
 and relop = 
     | EQ | LT | GT | LE | GE 
 
-(* As far as I can tell, labels and temps are only meant to be UIDs, and it's
-   the responsibility of later parts of the compiler to associate them with the
-   actual things in memory to which they refer *)
 (* A label identifies a location in the code that can be jumped to *)
 and label = int
 
@@ -87,14 +86,17 @@ let new_label () =
 
 (* Predefined temps: *)
 
-(* At the time of a function call this must be set to an array of values. Those
-   values will be taken as the TEMPs of the args to the function. This is to make
-   passing arrays as arguments more feasible *)
+(* At the time of a function call this must be set by the interpreter/future part
+   of the compiler to an array of values. Those values will be taken as the TEMPs
+   of the args to the function. This is to make passing arrays as arguments more feasible *)
 let arg_temp = 0 
 
-(* At the time of a function call, this must be set to the label to which the function
-   will return *)
-let ret_temp = 1
+(* At the end of a function call (TEMP ret_val) will be set to the return value of the function. *)
+let ret_val = 1
+
+(* At the time of a function call, (NAME ret_loc) must be made to act as the proper return
+   location of the functions. Functions will return with the stm (JUMP (NAME ret_loc)) *)
+let ret_loc = 1
 
 (** For generating unique temps *)
 let temp_count = ref 2
@@ -119,7 +121,6 @@ let add_label_ident ident lab_env =
     let n_lab = new_label () in
     Hashtbl.add !lab_env ident n_lab;
     n_lab
-
 
 (* Turn a list of stms into a SEQ *)
 let rec seq lst =
@@ -147,20 +148,27 @@ let rec intermediate_of_ast (Abstract_syntax.AST tree) =
 and translate_Expr_expr exp temp_env lab_env type_env del =
     match exp with
     | Abstract_syntax.VarExpr var -> translate_varExpr var temp_env lab_env type_env del
-    | Abstract_syntax.AssignExpr {var; value; pos} ->  I_CONST 1 (* TODO *)
+    | Abstract_syntax.AssignExpr {var; value; _} ->
+        let l = translate_varExpr var temp_env lab_env type_env del in
+        let r = translate_Expr_expr value temp_env lab_env type_env del in
+        ESEQ (MOVE (l, r),
+              r)
     | Abstract_syntax.LambdaExpr {func_type; params; body; _} ->
         let f_start = new_label () in
         let t_body = translate_block body params true temp_env lab_env type_env del in
         ESEQ (seq [LABEL f_start;
                    t_body], 
               NAME f_start)
-
     | Abstract_syntax.IntLitExpr {value; _} -> I_CONST value
     | Abstract_syntax.FloatLitExpr {value; _} -> F_CONST value
     (* Strings are not supported yet and will not be supported by the end of term *)
     | Abstract_syntax.StringLitExpr {value; _} -> I_CONST 1 (* Strings to be treated similar to arrays *)
     | Abstract_syntax.BoolLitExpr {value; _} -> I_CONST (int_of_bool value)
-    | Abstract_syntax.FuncCallExpr {func; args; _} -> I_CONST 1 (* TODO *)
+    | Abstract_syntax.FuncCallExpr {func; args; _} ->
+        let f = NAME (Hashtbl.find !lab_env func) in
+        let args = List.map (fun e -> translate_Expr_expr exp temp_env lab_env type_env del) args in
+        ESEQ (CALL (f, args),
+              TEMP ret_val)
     | Abstract_syntax.BinOpExpr {op; argl; argr; _} -> 
         begin
             let (t_argl, t_argr) = (translate_Expr_expr argl temp_env lab_env type_env del,
@@ -202,7 +210,10 @@ and translate_Expr_expr exp temp_env lab_env type_env del =
 and translate_Expr_stm exp temp_env lab_env type_env del =
     match exp with
     | Abstract_syntax.DeclExpr decl -> translate_declExpr decl temp_env lab_env type_env del
-    | Abstract_syntax.ReturnExpr x -> EXP (I_CONST 1) (* TODO *)
+    | Abstract_syntax.ReturnExpr x ->
+        let ret = translate_Expr_expr x temp_env lab_env type_env del in
+        seq [MOVE (TEMP ret_val, ret);
+             JUMP (NAME ret_loc)]
     | Abstract_syntax.IfExpr {cond; body; else_expr; _} ->
         let t_cond = translate_Expr_expr cond temp_env lab_env type_env del in
         let t_body = translate_block body [] false temp_env lab_env type_env del in
@@ -231,7 +242,7 @@ and translate_Expr_stm exp temp_env lab_env type_env del =
              t_body;
              CJUMP (EQ, I_CONST 1, t_cond, c, e);
              LABEL e;]
-    | _ -> raise (Invalid_argument "I don't think this should ever happen... TODO think this through better")
+    | _ -> EXP (translate_Expr_expr exp temp_env lab_env type_env del)
 
 and translate_varExpr var temp_env lab_env type_env del =
     match var with
@@ -304,25 +315,29 @@ and translate_block block args is_func temp_env lab_env type_env del =
     Stack.push "*" !del; 
     (* fetch each arg from the arg register before executing *)
     let fetch_args = 
-        seq (List.mapi (fun i (Abstract_syntax.QualIdent {ident_type; ident; _}) ->
+        (List.mapi (fun i (Abstract_syntax.QualIdent {ident_type; ident; _}) ->
                                 let n_temp = add_temp_ident ident ident_type temp_env type_env del in
-                                 COPY (n_temp, (MEM_TEMP (BINOP (PLUS, (MEM arg_temp), I_CONST i)))))
-                       args)
+                                COPY (n_temp, (MEM_TEMP (BINOP (PLUS, (MEM arg_temp), I_CONST i)))))
+                   args)
     in
-    rewind_env temp_env lab_env type_env del;
-    LABEL 1
+    let block_stms = (List.map (fun s -> translate_Expr_stm s temp_env lab_env type_env del) block)
+    in
+    rewind_env temp_env type_env del; (* TODO call UNALLOC_MEM *)
+    if is_func 
+        then seq (fetch_args @ block_stms @ [(JUMP (NAME ret_loc))])
+        else seq (fetch_args @ block_stms)
     end
 
 (** Rewind the temp_env and type_env environments to immediately before it 
     entered the current level of scoping. Raises Empty when at global scope.
     (So don't use it at global scope. There should be no reason to do so) *)
-and rewind_env temp_env lab_env type_env del =
+and rewind_env temp_env type_env del =
     match (Stack.pop !del) with
     | "*" -> () (* A star denotes the beginning of a new scope *)
     | s -> begin
            Hashtbl.remove !temp_env s;
            Hashtbl.remove !type_env s;
-           rewind_env temp_env lab_env type_env del;
+           rewind_env temp_env type_env del;
            end
 
 
