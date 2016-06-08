@@ -40,8 +40,9 @@ and stm =
     | EXP of expr
     | JUMP of label
     | CJUMP of relop * expr * expr * label * label
-    (* CALL of func * args. The func will only ever be a NAME *)
-    | CALL of expr * expr list
+    (* CALL of func * ret_loc * args. The func will only ever be a NAME. A CALL must make the ret_loc
+       label act precisely as if it is the label provided to the CALL *)
+    | CALL of expr * label * expr list
     | SEQ of stm * stm
     (* A label declared a label that may be JUMPed or CJUMPed to later *)
     | LABEL of label
@@ -165,7 +166,9 @@ and translate_Expr_expr exp temp_env lab_env type_env del =
     | Abstract_syntax.FuncCallExpr {func; args; _} ->
         let f = NAME (Hashtbl.find !lab_env func) in
         let args = List.map (fun e -> translate_Expr_expr e temp_env lab_env type_env del) args in
-        ESEQ (CALL (f, args),
+        let l = new_label () in
+        ESEQ (seq [CALL (f, l, args);
+                   LABEL l],
               TEMP ret_val)
     | Abstract_syntax.BinOpExpr {op; argl; argr; _} -> 
         begin
