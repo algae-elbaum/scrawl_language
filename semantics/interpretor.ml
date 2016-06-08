@@ -2,9 +2,18 @@ open Intermediate_tree
 
 type num = INT of int | FLOAT of float
 
-let array_vars = ref (Array.make 10 0) 
+
+(* GlobalJump tells us how many jumps we have preformed.
+It is necesary to tell when we need to halt execution of the next expr 
+because we already jumped.
+
+Vars tells us what Temps have mapped to what data.
+The stack pointer tells us what the most recent data on array_vars is.
+Array_vars  is where we store the data that is in arrays. Where that 
+data is is stored by temps in vars.*)
+let array_vars = ref (Array.make 10 (INT 0))
 let stack_pointer = ref 0 
-(* let vars : (Intermediate_tree.temp, num) Hashtbl.t= ref (Hashtbl.create 10)  *)
+let vars : (int, num) Hashtbl.t ref = ref (Hashtbl.create 10) 
 let glblJmp = ref 0 
 
 let rec interp_tree tree =
@@ -25,14 +34,15 @@ let rec interp_tree tree =
     | [] -> 0 (*Not sure about this*) *)
 and interp_expr xpr jmp whole= (*The rest is only used for labels*)
     match xpr with
-    | I_CONST x -> INT x
-    | F_CONST x -> FLOAT x
+    | I_CONST x -> interp_expr_val xpr
+    | F_CONST x -> interp_expr_val xpr
     (* Thing to jump to.It expects to get a number that corresponds to a label *)
     (* | NAME x -> x *)
     (* Temp a = Stack[Hastabl.find x] *)
- (*    | TEMP x -> 
-        let pointer = Hashtbl.find !vars x in
-        Hashtbl.find !array_vars pointer *)
+    | TEMP x -> interp_expr_val xpr
+    | MEM_TEMP x -> interp_expr_val xpr
+
+
     (* The only way to write a var is with move, so we're going to be silly when we use move*)
     | BINOP (op, x1, x2) -> (interp_binop op (interp_expr_val x1) (interp_expr_val x2))
     (* | ALLOC_MEM (temp, i) -> begin
@@ -42,8 +52,8 @@ and interp_expr xpr jmp whole= (*The rest is only used for labels*)
         stack_pointer = (!stack_pointer) + i
     end *)
     (* Mem x = Hastabl.find x *)
-    (* | MEM x ->
-        let pointer = Hashtbl.find !vars x *)
+    | MEM x -> interp_expr_val xpr
+        
     (* | CALL (f, xprLst) -> begin
         interp_exprlist xprLst;
         match f with
@@ -59,14 +69,33 @@ and interp_expr xpr jmp whole= (*The rest is only used for labels*)
                 else temp
         end
     | _ -> raise (Invalid_argument "Should never happen")
+(* This function evaluates the exprs that can be evaluated
+and returns the num that should be returned. Should only be called
+when we know that the type is going to be in this list. *)
 and interp_expr_val xpr =
     match xpr with
     | I_CONST x -> INT x
     | F_CONST x -> FLOAT x
-    (* | TEMP x ->
-    | CALL x -> 
-    | MEM x ->
-    | MEM_TEMP x -> *)
+    | TEMP x -> Array.get !array_vars x
+    (* | CALL x ->  *)
+    | MEM x -> let pointer = Hashtbl.find !vars x in pointer
+    (* I don't understand why I can't have the cases for TEMP and MEM_TEMP
+    both in the code at the same time. I get  
+    Error: This variant pattern is expected to have type num
+       The constructor MEM_TEMP does not belong to type num
+    which doesn't make sense. When one of the two is commented
+    out, the type of the function is Intermediate_tree.expr -> num
+    and TEMP only leads to INT() which is of type num.
+    MEM_TEMP alsp only leads to INT() which is also of type num.
+    The only thing I can think of is that maybe the array_vars
+    variable doesn't realize that it is holding nums*)
+    | MEM_TEMP x -> let pointer = interp_expr_val x in
+        begin
+            match pointer with
+            | INT y -> Array.get !array_vars y;
+            | _ -> raise (Invalid_argument "Should never happen")
+        end
+        
     | _ -> raise (Invalid_argument "Should never happen")
 (* Takes a binop and returns back a num *)
 and interp_binop op x1 x2 =
@@ -128,15 +157,37 @@ and interp_binop op x1 x2 =
     | _ -> raise (Invalid_argument "Should never happen")
 and interp_stm statement jmp whole=
     match statement with
-(*    | MOVE (t, x) -> 
-        let pointer = Hashtbl.find !vars t in
-        let value = (interp_expr x) in 
-        Hashtbl.add !array_vars pointer value *)
+    | MOVE (x1, x2) -> 
+        begin
+        match x1 with
+            | TEMP y -> let ans = interp_expr_val x2 in
+                Hashtbl.add !vars y ans;
+                INT 0
+            | MEM_TEMP y -> let ans = interp_expr_val x2 in
+                let y' = interp_expr_val y in
+                    begin
+                    match y' with
+                    | INT z -> begin
+                        match ans with
+                        | INT a -> Array.set !array_vars z ans;
+                                    INT 0
+                        | _ -> raise (Invalid_argument "Should never happen")
+                        end   
+                    | _ -> raise (Invalid_argument "Should never happen")
+                    end
+                
+            (* | NAME y -> *)
+            | _ -> raise (Invalid_argument "Should never happen")
+        end
+        
 (*     | EXP (x) -> interp_expr x *)
-    | SEQ (s1, s2) -> begin
-        interp_stm s1 jmp whole;
-        interp_stm s2 jmp whole
-    end
+    | SEQ (s1, s2) -> 
+        begin
+            let temp = interp_stm s1 jmp whole in
+            if (!glblJmp = jmp)
+                then (interp_stm s2 jmp whole)
+                else temp
+        end
     (* Unconditional jump to a label *)
     | JUMP l -> let rest = look_for_label l whole whole in(* Hashtbl.find !labels l in *)
         begin
