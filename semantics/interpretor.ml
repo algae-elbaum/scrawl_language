@@ -12,6 +12,8 @@ The stack pointer tells us what the most recent data on array_vars is.
 Array_vars  is where we store the data that is in arrays. Where that 
 data is is stored by temps in vars.*)
 let array_vars = ref (Array.make 10 (INT 0))
+let func_args = ref (Array.make 10 (INT 0)) (* Not sure what happens when more then 10 args*)
+let arg_number = ref 0
 let stack_pointer = ref 0 
 let vars : (int, num) Hashtbl.t ref = ref (Hashtbl.create 10) 
 let glblJmp = ref 0 
@@ -23,39 +25,21 @@ let rec interp_tree tree =
             ans
     | _ -> raise (Invalid_argument "Should never happen")
 
-(* and interp_exprlist lst jmp whole=
-    match lst with
-    | (xs::xss) -> 
-        begin
-        interp_expr xs jmp whole;
-        if !glblJmp = jmp
-            then interp_exprlist xss jmp whole
-        end
-    | [] -> 0 (*Not sure about this*) *)
 and interp_expr xpr jmp whole= (*The rest is only used for labels*)
     match xpr with
     | I_CONST x -> interp_expr_val xpr
     | F_CONST x -> interp_expr_val xpr
     (* Thing to jump to.It expects to get a number that corresponds to a label *)
-    (* | NAME x -> x *)
+    (* | NAME x -> interp_expr_val xpr *)
     (* Temp a = Stack[Hastabl.find x] *)
     | TEMP x -> interp_expr_val xpr
     | MEM_TEMP x -> interp_expr_val xpr
-
-
     (* The only way to write a var is with move, so we're going to be silly when we use move*)
     | BINOP (op, x1, x2) -> (interp_binop op (interp_expr_val x1) (interp_expr_val x2))
-    
     (* Mem x = Hastabl.find x *)
     | MEM x -> interp_expr_val xpr
         
-    (* | CALL (f, xprLst) -> begin
-        interp_exprlist xprLst;
-        match f with
-        | TEMP x -> interp_expr x
-        | LABEL x -> interp_expr x
-        | _ -> raise (Invalid_argument "Should never happen. Functions should be places")
-    end *)
+    
     | ESEQ (s, x) -> 
         begin
             let temp = interp_stm s jmp whole in
@@ -80,6 +64,7 @@ and interp_expr_val xpr =
             | INT y -> Array.get !array_vars y;
             | _ -> raise (Invalid_argument "Should never happen")
         end
+    | NAME x -> INT 0 (* We don't actually want to do anything bc its a label*)
         
     | _ -> raise (Invalid_argument "Should never happen")
 (* Takes a binop and returns back a num *)
@@ -161,11 +146,27 @@ and interp_stm statement jmp whole=
                     | _ -> raise (Invalid_argument "Should never happen")
                     end
                 
-            (* | NAME y -> *)
+            (* | NAME y1 -> 
+            begin
+                match x2 with
+                If NAME is on the left, then it also needs to be on the right.
+                It should copy the data.
+                | NAME y2 -> 
+                begin
+                    
+                end
+                | _ -> raise (Invalid_argument "Should never happen")
+            end *)
             | _ -> raise (Invalid_argument "Should never happen")
         end
-        
-(*     | EXP (x) -> interp_expr x *)
+    | COPY (t, x1) ->
+        begin
+            let ans = interp_expr_val x1 in
+                Hashtbl.add !vars t ans;
+                INT 0
+        end
+    | EXP (x) -> interp_expr x;
+                INT 0
     | SEQ (s1, s2) -> 
         begin
             let temp = interp_stm s1 jmp whole in
@@ -173,6 +174,21 @@ and interp_stm statement jmp whole=
                 then (interp_stm s2 jmp whole)
                 else temp
         end
+    (* | CALL (f, xprLst) -> begin
+        match f with
+        | NAME x -> 
+            let rest = look_for_label l whole whole in
+            begin
+                shove_args xprLst;
+                Hashtbl.add !vars 0 func_args
+                Hashtbl.add !vars 1 x
+                glblJmp := !glblJmp + 1;
+                interp_expr rest (jmp+1) whole
+                (* Return the correct value *)
+                Hashtbl.find !vars 1 
+            end
+        | _ -> raise (Invalid_argument "Should never happen. Functions should be places")
+    end *)
     (* Unconditional jump to a label *)
     | JUMP l -> let rest = look_for_label l whole whole in(* Hashtbl.find !labels l in *)
         begin
@@ -197,7 +213,7 @@ and interp_stm statement jmp whole=
                 end
     (* Sets up a label. Shouldn't actually do anything
     because jumps will look for the labels. *)
-    (* | LABEL (l) -> 0 *)
+    | LABEL (l) -> INT 0
     | ALLOC_MEM (temp, i) -> begin
         (* Everything is an array. even singletons *)
         Hashtbl.add !vars temp (INT !stack_pointer);
@@ -248,4 +264,12 @@ and look_for_label_expr val1 expr whole=
     | ESEQ (y1, x2) -> if (look_for_label_stm val1 y1 whole)
                             then true
                         else (look_for_label_expr val1 x2 whole)
-    | _ -> false
+    | NAME z1 -> if (val1 = z1) then true else false
+    | _ -> raise (Invalid_argument "Should never happen")
+(* and shove_args xprLst =
+    match xprLst with
+    | (xs::xss) -> begin 
+            Array.set func_args !arg_number xs;
+            arg_number := !arg_number + 1;
+            shove_args xss
+    | [] -> INT 0 *)
