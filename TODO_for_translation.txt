@@ -1,0 +1,18 @@
+The remaining things to implement for translation into the intermediate tree are:
+
+Strings:
+    Need to be implemented as arrays of characters. The part that's different is
+    that first the AST should be scanned for strings, then all strings should be
+    statically created and all references to strings replaces with the TEMP thus
+    created.
+Deallocating memory
+    As a block executes, it uses up bits of the stack. Need to keep track of how
+    much is used that way so that at the end of a block the stack can be rewound
+    the appropriate amount. Probably by keeping a global var that is incremented
+    by the right amount with every alloc and is used to dealloc the right amount.
+    The var would be saved and restored with the beginning and end of a block.
+Having some mechanism to crash the program with a message for array out of bounds
+errors:
+    Should probably just add an expr for just that purpose. The interpreter would
+    be able to shutdown when seeing it, and the compiler would be able to call
+    printf and exit.
