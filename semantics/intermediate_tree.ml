@@ -38,9 +38,7 @@ and stm =
         just setting the temp on the left to map to the same thing that the temp on the right does. *)
     | COPY of temp * expr
     | EXP of expr
-    (* JUMP's expr will only ever be a NAME or a TEMP. If it's a temp, it will be a temp which has had
-       (NAME ___) moved into it *)
-    | JUMP of expr
+    | JUMP of label
     | CJUMP of relop * expr * expr * label * label
     (* CALL of func * args. The func will only ever be a NAME *)
     | CALL of expr * expr list
@@ -213,7 +211,7 @@ and translate_Expr_stm exp temp_env lab_env type_env del =
     | Abstract_syntax.ReturnExpr x ->
         let ret = translate_Expr_expr x temp_env lab_env type_env del in
         seq [MOVE (TEMP ret_val, ret);
-             JUMP (NAME ret_loc)]
+             JUMP ret_loc]
     | Abstract_syntax.IfExpr {cond; body; else_expr; _} ->
         let t_cond = translate_Expr_expr cond temp_env lab_env type_env del in
         let t_body = translate_block body [] false temp_env lab_env type_env del in
@@ -224,7 +222,7 @@ and translate_Expr_stm exp temp_env lab_env type_env del =
         seq [CJUMP (EQ, I_CONST 1, t_cond, t, f);
              LABEL t;
              t_body;
-             JUMP (NAME e);
+             JUMP e;
              LABEL f;
              t_else;
              LABEL e;]
@@ -303,7 +301,7 @@ and rel_expr op argl argr =
                 CJUMP (op, argl, argr, t, f);
                 LABEL t;
                 MOVE (TEMP res, I_CONST 1);
-                JUMP (NAME e);
+                JUMP e;
                 LABEL f;
                 MOVE (TEMP res, I_CONST 0);
                 LABEL e;]),
@@ -324,7 +322,7 @@ and translate_block block args is_func temp_env lab_env type_env del =
     in
     rewind_env temp_env type_env del; (* TODO call UNALLOC_MEM *)
     if is_func 
-        then seq (fetch_args @ block_stms @ [(JUMP (NAME ret_loc))])
+        then seq (fetch_args @ block_stms @ [(JUMP ret_loc)])
         else seq (fetch_args @ block_stms)
     end
 
