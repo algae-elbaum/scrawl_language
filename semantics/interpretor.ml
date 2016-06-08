@@ -2,9 +2,9 @@ open Intermediate_tree
 
 type num = INT of int | FLOAT of float
 
-(* let array_vars = ref (Array.make 10 0)  *)
-(* let stack_pointer = ref 0  *)
-(* let vars : (typea, typeb) Hashtbl.t= ref (Hashtbl.create 10)  *)
+let array_vars = ref (Array.make 10 0) 
+let stack_pointer = ref 0 
+(* let vars : (Intermediate_tree.temp, num) Hashtbl.t= ref (Hashtbl.create 10)  *)
 let glblJmp = ref 0 
 
 let rec interp_tree tree =
@@ -34,7 +34,7 @@ and interp_expr xpr jmp whole= (*The rest is only used for labels*)
         let pointer = Hashtbl.find !vars x in
         Hashtbl.find !array_vars pointer *)
     (* The only way to write a var is with move, so we're going to be silly when we use move*)
-    (* | BINOP (op, x1, x2) -> interp_binop op (interp_expr x1) (interp_expr x2) *)
+    | BINOP (op, x1, x2) -> (interp_binop op (interp_expr_val x1) (interp_expr_val x2))
     (* | ALLOC_MEM (temp, i) -> begin
         (* Everything is an array. even singletons *)
         Hashtbl.add !vars temp !stack_pointer;
@@ -58,6 +58,15 @@ and interp_expr xpr jmp whole= (*The rest is only used for labels*)
                 then (interp_expr x jmp whole)
                 else temp
         end
+    | _ -> raise (Invalid_argument "Should never happen")
+and interp_expr_val xpr =
+    match xpr with
+    | I_CONST x -> INT x
+    | F_CONST x -> FLOAT x
+    (* | TEMP x ->
+    | CALL x -> 
+    | MEM x ->
+    | MEM_TEMP x -> *)
     | _ -> raise (Invalid_argument "Should never happen")
 (* Takes a binop and returns back a num *)
 and interp_binop op x1 x2 =
