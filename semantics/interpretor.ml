@@ -23,7 +23,7 @@ let rec interp_tree tree =
     | INTRM_TREE x -> 
             let ans = interp_expr x 0 tree in
             ans
-    | _ -> raise (Invalid_argument "Should never happen")
+    | _ -> raise (Invalid_argument "Should never happen1")
 
 and interp_expr xpr jmp whole= (*The rest is only used for labels*)
     match xpr with
@@ -47,7 +47,7 @@ and interp_expr xpr jmp whole= (*The rest is only used for labels*)
                 then (interp_expr x jmp whole)
                 else temp
         end
-    | _ -> raise (Invalid_argument "Should never happen")
+    | _ -> raise (Invalid_argument "Should never happen2")
 (* This function evaluates the exprs that can be evaluated
 and returns the num that should be returned. Should only be called
 when we know that the type is going to be in this list. *)
@@ -62,11 +62,11 @@ and interp_expr_val xpr =
         begin
             match pointer with
             | INT y -> Array.get !array_vars y;
-            | _ -> raise (Invalid_argument "Should never happen")
+            | _ -> raise (Invalid_argument "Should never happen3")
         end
     | NAME x -> INT 0 (* We don't actually want to do anything bc its a label*)
         
-    | _ -> raise (Invalid_argument "Should never happen")
+    | _ -> raise (Invalid_argument "Should never happen4")
 (* Takes a binop and returns back a num *)
 and interp_binop op x1 x2 =
     match op, x1, x2 with
@@ -124,7 +124,7 @@ and interp_binop op x1 x2 =
     | POW, FLOAT y1, INT y2 -> FLOAT(y1 ** float_of_int(y2))
     | POW, INT y1, INT y2 -> INT(int_of_float(float_of_int(y1) ** float_of_int(y2)))
 
-    | _ -> raise (Invalid_argument "Should never happen")
+    | _ -> raise (Invalid_argument "Should never happen5")
 and interp_stm statement jmp whole=
     match statement with
     | MOVE (x1, x2) -> 
@@ -141,9 +141,9 @@ and interp_stm statement jmp whole=
                         match ans with
                         | INT a -> Array.set !array_vars z ans;
                                     INT 0
-                        | _ -> raise (Invalid_argument "Should never happen")
+                        | _ -> raise (Invalid_argument "Should never happen6")
                         end   
-                    | _ -> raise (Invalid_argument "Should never happen")
+                    | _ -> raise (Invalid_argument "Should never happen7")
                     end
                 
             (* | NAME y1 -> 
@@ -157,7 +157,7 @@ and interp_stm statement jmp whole=
                 end
                 | _ -> raise (Invalid_argument "Should never happen")
             end *)
-            | _ -> raise (Invalid_argument "Should never happen")
+            | _ -> raise (Invalid_argument "Should never happen8")
         end
     | COPY (t, x1) ->
         begin
@@ -221,7 +221,7 @@ and interp_stm statement jmp whole=
         stack_pointer := (!stack_pointer) + i;
         INT !stack_pointer
         end
-    | _ -> raise (Invalid_argument "Should never happen")
+    | _ -> raise (Invalid_argument "Should never happen9")
 and interp_relop op x1 x2=
     match op , x1, x2 with
     | EQ, INT y1, INT y2 -> if y1 = y2 then INT 1 else INT 0
@@ -249,7 +249,7 @@ and look_for_label val1 xpr whole =
         | ESEQ (y1, x2) -> if (look_for_label_stm val1 y1 whole) 
                             then x 
                             else (look_for_label val1 (INTRM_TREE x2) whole)
-        | _ -> raise (Invalid_argument "Should never happen") (*Not any labels bc labels are STMs so can't happen*)
+        | _ -> raise (Invalid_argument "Should never happen0") (*Not any labels bc labels are STMs so can't happen*)
 
 and look_for_label_stm val1 stm whole=
     match stm with
@@ -264,8 +264,7 @@ and look_for_label_expr val1 expr whole=
     | ESEQ (y1, x2) -> if (look_for_label_stm val1 y1 whole)
                             then true
                         else (look_for_label_expr val1 x2 whole)
-    | NAME z1 -> if (val1 = z1) then true else false
-    | _ -> raise (Invalid_argument "Should never happen")
+    | _ -> false
 (* and shove_args xprLst =
     match xprLst with
     | (xs::xss) -> begin 
