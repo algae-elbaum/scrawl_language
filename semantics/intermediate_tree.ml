@@ -129,8 +129,8 @@ let rec seq lst =
         | h::t -> SEQ (h, lst_to_seq t)
     in
     match lst with
-    | []
-    | [_] -> raise (Invalid_argument "Empty or singleton stm list for seq")
+    | [] -> raise (Invalid_argument "Empty stm list for seq")
+    | [e] -> e
     | h::t -> SEQ (h, lst_to_seq t)
 
 let rec intermediate_of_ast (Abstract_syntax.AST tree) =
@@ -164,7 +164,7 @@ and translate_Expr_expr exp temp_env lab_env type_env del =
     | Abstract_syntax.BoolLitExpr {value; _} -> I_CONST (int_of_bool value)
     | Abstract_syntax.FuncCallExpr {func; args; _} ->
         let f = NAME (Hashtbl.find !lab_env func) in
-        let args = List.map (fun e -> translate_Expr_expr exp temp_env lab_env type_env del) args in
+        let args = List.map (fun e -> translate_Expr_expr e temp_env lab_env type_env del) args in
         ESEQ (CALL (f, args),
               TEMP ret_val)
     | Abstract_syntax.BinOpExpr {op; argl; argr; _} -> 

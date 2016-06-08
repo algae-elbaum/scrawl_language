@@ -119,7 +119,7 @@ func_decl:
     {Abstract_syntax.FuncDecl {func_type=Abstract_syntax.ScrawlFuncType
                                             {param_types=types_of_params $4;
                                              ret_type=$7}; 
-                               ident=""; params=$4; body=$8; pos=$1}}
+                               ident=fst $2; params=$4; body=$8; pos=$1}}
 
 (* This is for declaring functions *)
 param_list:

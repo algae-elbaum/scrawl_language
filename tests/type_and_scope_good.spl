@@ -24,6 +24,7 @@ while (true)
             par1 = par1 = 5;
         };
         i = 10;
+        lumber(1, "asf");
     };
 };
 a = 8;

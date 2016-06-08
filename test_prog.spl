@@ -1,0 +1,19 @@
+int i;
+i = 1;
+i + i;
+int[4] j;
+j[2] = i;
+
+while (i < 4)
+{
+    i = i + 1;
+    for (i = 5; i < 90; i = i + 1)
+    {
+        i = i + 2;
+        fun lamb(int a, int b) -> int
+        {
+            return a;
+        };
+        i = lamb(i, i);
+    };
+};
