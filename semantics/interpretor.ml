@@ -45,12 +45,7 @@ and interp_expr xpr jmp whole= (*The rest is only used for labels*)
 
     (* The only way to write a var is with move, so we're going to be silly when we use move*)
     | BINOP (op, x1, x2) -> (interp_binop op (interp_expr_val x1) (interp_expr_val x2))
-    (* | ALLOC_MEM (temp, i) -> begin
-        (* Everything is an array. even singletons *)
-        Hashtbl.add !vars temp !stack_pointer;
-        (* Add to the stack pointer *)
-        stack_pointer = (!stack_pointer) + i
-    end *)
+    
     (* Mem x = Hastabl.find x *)
     | MEM x -> interp_expr_val xpr
         
@@ -79,16 +74,6 @@ and interp_expr_val xpr =
     | TEMP x -> Array.get !array_vars x
     (* | CALL x ->  *)
     | MEM x -> let pointer = Hashtbl.find !vars x in pointer
-    (* I don't understand why I can't have the cases for TEMP and MEM_TEMP
-    both in the code at the same time. I get  
-    Error: This variant pattern is expected to have type num
-       The constructor MEM_TEMP does not belong to type num
-    which doesn't make sense. When one of the two is commented
-    out, the type of the function is Intermediate_tree.expr -> num
-    and TEMP only leads to INT() which is of type num.
-    MEM_TEMP alsp only leads to INT() which is also of type num.
-    The only thing I can think of is that maybe the array_vars
-    variable doesn't realize that it is holding nums*)
     | MEM_TEMP x -> let pointer = interp_expr_val x in
         begin
             match pointer with
@@ -213,6 +198,13 @@ and interp_stm statement jmp whole=
     (* Sets up a label. Shouldn't actually do anything
     because jumps will look for the labels. *)
     (* | LABEL (l) -> 0 *)
+    | ALLOC_MEM (temp, i) -> begin
+        (* Everything is an array. even singletons *)
+        Hashtbl.add !vars temp (INT !stack_pointer);
+        (* Add to the stack pointer *)
+        stack_pointer := (!stack_pointer) + i;
+        INT !stack_pointer
+        end
     | _ -> raise (Invalid_argument "Should never happen")
 and interp_relop op x1 x2=
     match op , x1, x2 with
