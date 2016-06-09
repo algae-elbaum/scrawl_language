@@ -105,6 +105,7 @@ and chk_Expr xpr env del errs =
         func_type
         end
     | ReturnExpr x -> chk_Expr x env del errs
+    | PrintExpr _ -> NONE
     | IntLitExpr _ -> INT
     | FloatLitExpr _ -> FLOAT
     | StringLitExpr _ -> STRING

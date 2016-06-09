@@ -16,7 +16,7 @@
 %token <Abstract_syntax.pos> PLUS MINUS TIMES DIV MOD POW UMINUS
 %token <Abstract_syntax.pos> ASSIGN
 %token <string * Abstract_syntax.pos> IDENT
-%token <Abstract_syntax.pos> IF ELSE FOR WHILE ARROW RETURN
+%token <Abstract_syntax.pos> IF ELSE FOR WHILE ARROW RETURN PRINT
 %token <Abstract_syntax.pos> LPAREN RPAREN LCURLY RCURLY LSQUARE RSQUARE
 %token <Abstract_syntax.pos> SEMICOLON
 %token <Abstract_syntax.pos> EOF
@@ -64,6 +64,7 @@ expr:
   | decl {Abstract_syntax.DeclExpr $1}
   | assign {$1}
   | lambda {$1}
+  | PRINT STRING_LIT {Abstract_syntax.PrintExpr {str=fst $2; pos=$1}}
   | IDENT LPAREN arg_list RPAREN {Abstract_syntax.FuncCallExpr 
       {func= fst $1; args=$3; pos=snd $1}}
   | RETURN expr {Abstract_syntax.ReturnExpr $2}

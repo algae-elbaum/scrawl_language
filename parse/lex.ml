@@ -29,6 +29,7 @@ let tokstr = function
   | Parser.FLOAT_LIT (f, _) -> "(FLOAT_LIT " ^ (string_of_float f) ^ ")"
   | Parser.STRING_LIT (str, _) -> "(STRING_LIT \"" ^ str ^ "\")"
   | Parser.BOOL_LIT (b, _) -> "(BOOL_LIT " ^ (string_of_bool b) ^ ")"
+  | Parser.PRINT _ -> "PRINT"
 
   | Parser.INT_T _-> "INT_T"
   | Parser.FLOAT_T _ -> "FLOAT_T"

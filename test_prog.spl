@@ -15,5 +15,6 @@ while (i < 4)
             return a;
         };
         i = lamb(i, i);
+        print "hmmm";
     };
 };

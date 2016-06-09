@@ -25,6 +25,9 @@ and expr =
 
     | ReturnExpr of expr
 
+    | PrintExpr of {str: string;
+                    pos: pos}
+
     | IntLitExpr of {value: int;
                      pos: pos}
 
@@ -175,6 +178,8 @@ and comp_Expr xpr1 xpr2 =
       LambdaExpr {func_type = ft2; params = p2; body = b2; _} ->
         ft1 = ft2 && (comp_paramList p1 p2) && (comp_ExprList b1 b2)
     | ReturnExpr x1, ReturnExpr x2 -> comp_Expr x1 x2
+    | PrintExpr {str = s1; _}, PrintExpr {str = s2; _} ->
+        s1 = s2
     | IntLitExpr {value = v1; _}, IntLitExpr {value = v2; _} -> v1 = v2
     | FloatLitExpr {value = v1; _}, FloatLitExpr {value = v2; _} -> v1 = v2
     | StringLitExpr {value = v1; _}, StringLitExpr {value = v2; _} -> v1 = v2
@@ -293,6 +298,7 @@ and prettyPrint_Expr xpr =
         ^ prettyPrint_ScrawlType func_type ^ "\n"
         ^ "{\n" ^(prettyPrint_ExprList body) ^ "}"
     | ReturnExpr x -> "Return " ^ (prettyPrint_Expr x)
+    | PrintExpr {str; _} -> "print \"" ^ str ^ "\""
     | IntLitExpr {value; _} -> (string_of_int value)
     | FloatLitExpr {value; _} -> (string_of_float value)
     | StringLitExpr {value; _} -> value
@@ -357,6 +363,7 @@ let rec extract_pos xpr =
     | DeclExpr decl -> extract_pos_decl decl
     | AssignExpr {var; value; pos} -> pos
     | LambdaExpr {func_type; params; body; pos} -> pos
+    | PrintExpr {str; pos} -> pos
     | ReturnExpr x -> extract_pos x
     | IntLitExpr {value; pos} -> pos
     | FloatLitExpr {value; pos} -> pos

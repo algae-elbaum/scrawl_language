@@ -56,6 +56,7 @@ and simplify_Expr xpr=
                    pos}
     (* List the rest out for explicitness' sake *)
     | NoOp
+    | PrintExpr _
     | IntLitExpr _
     | FloatLitExpr _
     | StringLitExpr _

@@ -59,6 +59,7 @@ and stm =
     (* (UNALLOC_MEM n) signals that the last n words of memory are now out of scope and should
        be unallocated *)
     | UNALLOC_MEM of int
+    | PRINT of string
 
 
 and binop = 
@@ -243,6 +244,7 @@ and translate_Expr_stm exp temp_env lab_env type_env del =
              t_body;
              CJUMP (EQ, I_CONST 1, t_cond, c, e);
              LABEL e;]
+    | Abstract_syntax.PrintExpr {str; _} -> PRINT str
     | _ -> EXP (translate_Expr_expr exp temp_env lab_env type_env del)
 
 and translate_varExpr var temp_env lab_env type_env del =

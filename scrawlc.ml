@@ -43,8 +43,8 @@ let () =
         end;
     Printf.printf "Here's the pretty printed result of parsing the given file:\n";
     Printf.printf "%s\n\n" (Abstract_syntax.prettyPrint_Tree ast);
-    Printf.printf "Here's an invisible run of the interpretor\n";
     let intrm = Intermediate_tree.intermediate_of_ast simpler_ast in
-    Interpretor.interp_tree intrm;
+    Printf.printf "Here's an invisible run of the interpretor\n";
+    (fun _ -> ()) (Interpretor.interp_tree intrm);
     exit 0
     end
