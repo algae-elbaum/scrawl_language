@@ -76,6 +76,68 @@ and label = int
 (* A temp identifies a variable. *)
 and temp = int
 
+let rec prettyPrint_Stm s =
+    match s with
+    | MOVE (x1,x2) -> "MOVE " ^ (prettyPrint_Expr x1) ^ ", " ^ (prettyPrint_Expr x2)
+    | COPY (t, x) -> "COPY " ^ (string_of_int t) ^ ", " ^ (prettyPrint_Expr x)
+    | EXP x -> "\n" ^ (prettyPrint_Expr x)
+    | JUMP l-> "JUMP " ^ (string_of_int l)
+    | CJUMP (relop,x1,x2,l1,l2)-> "CJUMP {(" ^ (prettyPrint_Expr x1) ^ "-> " ^ (string_of_int l1) ^ ") (" ^ (prettyPrint_Expr x2) ^ "-> " ^ (string_of_int l2) ^ ")}"
+    (* I don't think the label in call needs to go i nthe pretty print *)
+    | CALL (x,l,args) -> "CALL {" ^ (prettyPrint_Expr x) ^ "on (" ^ (prettyPrint_ParamList args) ^ ")}"
+    | SEQ (s1, s2) -> (prettyPrint_Stm s1) ^ "\n" ^ (prettyPrint_Stm s2)
+    | LABEL l -> "LABEL " ^ (string_of_int l)
+    | ALLOC_MEM (t,i) -> "ALLOC_MEM " ^ (string_of_int i) ^ " slots to " ^ (string_of_int t)
+    | UNALLOC_MEM i -> "UNALLOC_MEM " ^ (string_of_int i)
+    | PRINT str -> "PRINT " ^ str
+
+and prettyPrint_ParamList args =
+    match args with
+    | (xs::xss) -> (prettyPrint_Expr xs) ^ ", " ^ (prettyPrint_ParamList xss)
+    | [] -> ""
+
+and prettyPrint_RelOp op =
+    match op with
+    | EQ -> "="
+    | LT -> "<"
+    | GT -> ">"
+    | LE -> "<="
+    | GE -> ">="
+
+and prettyPrint_BinOp op =
+    match op with
+    | BAND -> "BAND"
+    | BOR -> "BOR"
+    | BXOR ->"BXOR"
+    | BLEFT -> "BLEFT"
+    | BRIGHT -> "BRIGHT"
+    | LAND -> "LAND"
+    | LOR -> "LOR"
+    | LXNOR ->"LXNOR"
+    | LXAND ->"LXAND"
+    | LXNAND ->"LXNAND"
+    | PLUS ->"PLUS"
+    | MINUS ->"MINUS"
+    | TIMES ->"TIMES"
+    | DIV ->"DIV"
+    | MOD ->"MOD"
+    | POW ->"POW"
+
+and prettyPrint_Expr xpr =
+    match xpr with
+    | I_CONST x -> string_of_int x
+    | F_CONST x -> string_of_float x
+    | NAME l -> "NAME" ^ (string_of_int l)
+    | TEMP t -> "TEMP" ^ (string_of_int t)
+    | BINOP (op, x1, x2) -> "(" ^(prettyPrint_Expr x1) ^" "^(prettyPrint_BinOp op)^" " ^ (prettyPrint_Expr x1) ^ ")"
+    | MEM t -> "TEMP" ^ (string_of_int t)
+    | MEM_TEMP x -> "MEM_TEMP" ^ (prettyPrint_Expr x)
+    | ESEQ (s, x) -> (prettyPrint_Stm s) ^ "\n" ^ (prettyPrint_Expr x)
+
+and prettyPrint_Tree tree = 
+    match tree with
+    | INTRM_TREE x -> prettyPrint_Expr x
+
 (** For generating unique labels *)
 let label_count = ref 0
 let new_label () =
