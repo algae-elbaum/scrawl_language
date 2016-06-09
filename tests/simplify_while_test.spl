@@ -14,15 +14,15 @@ for (i = 0; i < 10; i = i + 1)
 
 for (; j < 10; j = j + 1)
 {
-    print(j);
+    printn(j);
 };
 
 for (; ; z = z + 1)
 {
-    print(z);
+    printn(z);
 };
 
 for (; k < 10;)
 {
-    print(k);
+    printn(k);
 };
