@@ -1,17 +1,19 @@
+# Tests arrays and loops
 int i;
 i = 1;
 i + i;
 int[4] j;
 j[2] = i;
 
-while (i < 4)
+while (i < 2)
 {
-    i = i + 1;
-    for (i = 5; i < 90; i = i + 1)
-    {
-        i = i + 2;
-        print "hmmm";
-    };
+    i = 2;
+    print "hmmm";
+};
+
+for (i = 5; i < 10; i = i + 5)
+{
+    print "umm";
 };
 
 print "Completed test_prog1";

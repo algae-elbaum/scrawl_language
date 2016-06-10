@@ -16,3 +16,18 @@ errors:
     Should probably just add an expr for just that purpose. The interpreter would
     be able to shutdown when seeing it, and the compiler would be able to call
     printf and exit.
+
+The remaining things to implement for the Interpretor are:
+    
+Implementing functions: There is a pointer on the stack which is set every time
+a function is entered and the values are placed there. In addition, the code jumps back
+to the ret_location which will be stored when a function is called. We can keep track of 
+where we are in the code and continue from there.
+
+Implementing the parts from above: The explanations above are pretty good representations
+of the plan for how they would interact with the interpretor.
+
+Writing Testsuite: I've tested the code by hand using test_prog.spl,test_prog2.spl 
+and test_prog3.spl. This checks arrays and loops are working. I should write test code
+that catches the output from the interpretor and checks what it outputs against
+a known value. However, I need to finish this writeup so that I can pack. :/

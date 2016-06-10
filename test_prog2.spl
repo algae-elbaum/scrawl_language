@@ -1,3 +1,4 @@
+# Tests arrays.
 int i;
 i = 1;
 i + i;
