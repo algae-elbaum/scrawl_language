@@ -46,7 +46,8 @@ let () =
     Printf.printf "Here's a pretty printed result of translating:\n";
     let intrm = Intermediate_tree.intermediate_of_ast simpler_ast in
     Printf.printf "%s\n\n" (Intermediate_tree.prettyPrint_Tree intrm);
-    Printf.printf "Here's an invisible run of the interpretor\n";
+    Printf.printf "Here's a run of the interpretor\n";
     (fun _ -> ()) (Interpretor.interp_tree intrm);
+    Printf.printf "\n";
     exit 0
     end

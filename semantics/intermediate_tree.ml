@@ -82,14 +82,14 @@ let rec prettyPrint_Stm s =
     | COPY (t, x) -> "COPY " ^ (string_of_int t) ^ ", " ^ (prettyPrint_Expr x)
     | EXP x -> "\n" ^ (prettyPrint_Expr x)
     | JUMP l-> "JUMP " ^ (string_of_int l)
-    | CJUMP (relop,x1,x2,l1,l2)-> "CJUMP {(" ^ (prettyPrint_Expr x1) ^ "-> " ^ (string_of_int l1) ^ ") (" ^ (prettyPrint_Expr x2) ^ "-> " ^ (string_of_int l2) ^ ")}"
+    | CJUMP (relop,x1,x2,l1,l2)-> "CJUMP {(if " ^ (prettyPrint_Expr x1) ^" "^ (prettyPrint_RelOp relop) ^ (prettyPrint_Expr x2) ^ ") (" ^ (string_of_int l1) ^ " or " ^ (string_of_int l2) ^ ")}"
     (* I don't think the label in call needs to go i nthe pretty print *)
     | CALL (x,l,args) -> "CALL {" ^ (prettyPrint_Expr x) ^ "on (" ^ (prettyPrint_ParamList args) ^ ")}"
     | SEQ (s1, s2) -> (prettyPrint_Stm s1) ^ "\n" ^ (prettyPrint_Stm s2)
     | LABEL l -> "LABEL " ^ (string_of_int l)
     | ALLOC_MEM (t,i) -> "ALLOC_MEM " ^ (string_of_int i) ^ " slots to " ^ (string_of_int t)
     | UNALLOC_MEM i -> "UNALLOC_MEM " ^ (string_of_int i)
-    | PRINT str -> "PRINT " ^ str
+    | PRINT str -> "\nPRINT " ^ str ^ "\n"
 
 and prettyPrint_ParamList args =
     match args with
@@ -404,5 +404,3 @@ and rewind_env temp_env type_env del =
            Hashtbl.remove !type_env s;
            rewind_env temp_env type_env del;
            end
-
-
