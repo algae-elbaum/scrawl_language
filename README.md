@@ -1,10 +1,19 @@
 #Scrawl
 
-Scrawl is a language being made by Kyle Seipp and Henry Elbaum.
+Scrawl is a language being made by Kyle Seipp and Henry Elbaum. (Now on
+potentially infinite hiatus). It vaguely follows *Modern Compiler Implementation
+in ML* by Andrew Appel.
 
-More details to come
+At its current state, it can compile all planned features into an intermediate
+'pseudo-assembly' language. An interpreter is implemented for that language, but
+lacks some features like function calls.
 
-Current status: Lexing works, parsing is getting there.
+If we every decide to complete this, the next steps would be to complete the
+interpreter and then work on translating the intermediate language into either
+x86 or llvm. In the first case we would want to focus a lot on optimizations,
+and in the second case my impression is that llvm largely takes care of that for
+us. Learning about optimizations ourselves seems more interesting. Another
+important thing to do would be to complete the documentation.
 
 Dependencies:
   - ocamlbuild
