@@ -1,4 +1,4 @@
-#Scrawl
+# Scrawl
 
 Scrawl is a language being made by Kyle Seipp and Henry Elbaum. (Now on
 potentially infinite hiatus). It vaguely follows *Modern Compiler Implementation
