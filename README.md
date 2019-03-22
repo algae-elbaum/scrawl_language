@@ -18,3 +18,7 @@ important thing to do would be to complete the documentation.
 Dependencies:
   - ocamlbuild
   - menhir
+
+
+TODOs are followed by numbers to indicate their priority. The higher the number the less
+important
