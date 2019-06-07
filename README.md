@@ -1,6 +1,6 @@
 # Scrawl
 
-Scrawl is a language being made by Henry Elbaum and Kyle Seipp. (Now on
+Scrawl is a language being made by Algae Elbaum and Kyle Seipp. (Now on
 potentially infinite hiatus). It vaguely follows *Modern Compiler Implementation
 in ML* by Andrew Appel.
 
